@@ -140,8 +140,13 @@ def sample_supplier(app, db_session):
             contact_person='John Smith',
             email='john@techsupplies.com',
             phone='123-456-7890',
+            address='123 Tech Street',
             city='New York',
-            country='USA'
+            state='NY',
+            country='USA',
+            postal_code='10001',
+            tax_id='TAX-123456',
+            payment_terms='Net 30'
         )
         db_session.add(supplier)
         db_session.commit()
@@ -156,8 +161,13 @@ def sample_warehouse(app, db_session):
         warehouse = Warehouse(
             warehouse_name='Main Warehouse',
             location='Downtown',
+            address='456 Warehouse Ave',
             city='New York',
+            state='NY',
             country='USA',
+            postal_code='10002',
+            manager_name='Bob Manager',
+            phone='555-123-4567',
             capacity=10000
         )
         db_session.add(warehouse)
@@ -178,7 +188,14 @@ def sample_product(app, db_session, sample_category, sample_brand):
             brand_id=sample_brand.brand_id,
             unit_price=99.99,
             cost_price=49.99,
-            reorder_level=10
+            reorder_level=10,
+            min_stock_level=5,
+            max_stock_level=200,
+            unit_of_measure='pcs',
+            barcode='1234567890123',
+            sku='SKU-PROD001',
+            weight=1.5,
+            dimensions='10x5x3 cm'
         )
         db_session.add(product)
         db_session.commit()
@@ -211,8 +228,13 @@ def sample_customer(app, db_session):
             contact_person='Jane Doe',
             email='jane@testcustomer.com',
             phone='987-654-3210',
+            address='789 Customer Blvd',
             city='Los Angeles',
-            country='USA'
+            state='CA',
+            country='USA',
+            postal_code='90001',
+            tax_id='CUST-TAX-789',
+            credit_limit=50000.00
         )
         db_session.add(customer)
         db_session.commit()

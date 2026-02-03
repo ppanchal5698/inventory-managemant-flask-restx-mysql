@@ -33,8 +33,13 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/login",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "login"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
 						}
 					}
 				},
@@ -45,8 +50,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/auth/logout",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "logout"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
 						}
 					}
 				},
@@ -57,8 +67,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/auth/me",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "me"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"me"
+							]
 						}
 					}
 				},
@@ -69,8 +84,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/auth/users",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "users"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"users"
+							]
 						}
 					}
 				},
@@ -81,8 +101,14 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/auth/users/1",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "users", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"users",
+								"1"
+							]
 						}
 					}
 				},
@@ -102,8 +128,13 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/users",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "users"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"users"
+							]
 						}
 					}
 				},
@@ -123,8 +154,14 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/users/1",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "users", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"users",
+								"1"
+							]
 						}
 					}
 				},
@@ -144,8 +181,13 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/auth/change-password",
-							"host": ["{{base_url}}"],
-							"path": ["auth", "change-password"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"auth",
+								"change-password"
+							]
 						}
 					}
 				}
@@ -162,8 +204,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/categories",
-							"host": ["{{base_url}}"],
-							"path": ["categories"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories"
+							]
 						}
 					}
 				},
@@ -174,8 +220,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/categories?root_only=true",
-							"host": ["{{base_url}}"],
-							"path": ["categories"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories"
+							],
 							"query": [
 								{
 									"key": "root_only",
@@ -192,8 +242,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/categories/1?include_children=true",
-							"host": ["{{base_url}}"],
-							"path": ["categories", "1"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"1"
+							],
 							"query": [
 								{
 									"key": "include_children",
@@ -210,8 +265,14 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/categories/1/subcategories",
-							"host": ["{{base_url}}"],
-							"path": ["categories", "1", "subcategories"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"1",
+								"subcategories"
+							]
 						}
 					}
 				},
@@ -231,8 +292,12 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/categories",
-							"host": ["{{base_url}}"],
-							"path": ["categories"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories"
+							]
 						}
 					}
 				},
@@ -252,8 +317,13 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/categories/1",
-							"host": ["{{base_url}}"],
-							"path": ["categories", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"1"
+							]
 						}
 					}
 				},
@@ -264,8 +334,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/categories/1",
-							"host": ["{{base_url}}"],
-							"path": ["categories", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"categories",
+								"1"
+							]
 						}
 					}
 				}
@@ -282,8 +357,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/suppliers",
-							"host": ["{{base_url}}"],
-							"path": ["suppliers"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"suppliers"
+							]
 						}
 					}
 				},
@@ -294,8 +373,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/suppliers?search=acme",
-							"host": ["{{base_url}}"],
-							"path": ["suppliers"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"suppliers"
+							],
 							"query": [
 								{
 									"key": "search",
@@ -312,8 +395,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/suppliers/1",
-							"host": ["{{base_url}}"],
-							"path": ["suppliers", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"suppliers",
+								"1"
+							]
 						}
 					}
 				},
@@ -329,12 +417,16 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"supplier_name\": \"ACME Corporation\",\n    \"contact_person\": \"John Smith\",\n    \"email\": \"john@acme.com\",\n    \"phone\": \"+1234567890\",\n    \"address\": \"123 Main Street\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"country\": \"USA\",\n    \"postal_code\": \"10001\",\n    \"payment_terms\": \"Net 30\"\n}"
+							"raw": "{\n    \"supplier_name\": \"ACME Corporation\",\n    \"contact_person\": \"John Smith\",\n    \"email\": \"john@acme.com\",\n    \"phone\": \"+1234567890\",\n    \"address\": \"123 Main Street\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"country\": \"USA\",\n    \"postal_code\": \"10001\",\n    \"tax_id\": \"TAX-ACME-001\",\n    \"payment_terms\": \"Net 30\"\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/suppliers",
-							"host": ["{{base_url}}"],
-							"path": ["suppliers"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"suppliers"
+							]
 						}
 					}
 				},
@@ -354,8 +446,13 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/suppliers/1",
-							"host": ["{{base_url}}"],
-							"path": ["suppliers", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"suppliers",
+								"1"
+							]
 						}
 					}
 				},
@@ -366,8 +463,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/suppliers/1",
-							"host": ["{{base_url}}"],
-							"path": ["suppliers", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"suppliers",
+								"1"
+							]
 						}
 					}
 				}
@@ -384,8 +486,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/brands",
-							"host": ["{{base_url}}"],
-							"path": ["brands"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"brands"
+							]
 						}
 					}
 				},
@@ -396,8 +502,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/brands/1",
-							"host": ["{{base_url}}"],
-							"path": ["brands", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"brands",
+								"1"
+							]
 						}
 					}
 				},
@@ -417,8 +528,12 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/brands",
-							"host": ["{{base_url}}"],
-							"path": ["brands"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"brands"
+							]
 						}
 					}
 				},
@@ -438,8 +553,13 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/brands/1",
-							"host": ["{{base_url}}"],
-							"path": ["brands", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"brands",
+								"1"
+							]
 						}
 					}
 				},
@@ -450,8 +570,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/brands/1",
-							"host": ["{{base_url}}"],
-							"path": ["brands", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"brands",
+								"1"
+							]
 						}
 					}
 				}
@@ -468,8 +593,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/products",
-							"host": ["{{base_url}}"],
-							"path": ["products"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products"
+							]
 						}
 					}
 				},
@@ -480,8 +609,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/products?include_stock=true",
-							"host": ["{{base_url}}"],
-							"path": ["products"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products"
+							],
 							"query": [
 								{
 									"key": "include_stock",
@@ -498,8 +631,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/products?search=laptop",
-							"host": ["{{base_url}}"],
-							"path": ["products"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products"
+							],
 							"query": [
 								{
 									"key": "search",
@@ -516,8 +653,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/products?category_id=1",
-							"host": ["{{base_url}}"],
-							"path": ["products"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products"
+							],
 							"query": [
 								{
 									"key": "category_id",
@@ -534,8 +675,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/products/low-stock",
-							"host": ["{{base_url}}"],
-							"path": ["products", "low-stock"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products",
+								"low-stock"
+							]
 						}
 					}
 				},
@@ -546,8 +692,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/products/1",
-							"host": ["{{base_url}}"],
-							"path": ["products", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products",
+								"1"
+							]
 						}
 					}
 				},
@@ -558,8 +709,14 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/products/barcode/1234567890123",
-							"host": ["{{base_url}}"],
-							"path": ["products", "barcode", "1234567890123"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products",
+								"barcode",
+								"1234567890123"
+							]
 						}
 					}
 				},
@@ -579,8 +736,12 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/products",
-							"host": ["{{base_url}}"],
-							"path": ["products"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products"
+							]
 						}
 					}
 				},
@@ -600,8 +761,13 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/products/1",
-							"host": ["{{base_url}}"],
-							"path": ["products", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products",
+								"1"
+							]
 						}
 					}
 				},
@@ -612,8 +778,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/products/1",
-							"host": ["{{base_url}}"],
-							"path": ["products", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"products",
+								"1"
+							]
 						}
 					}
 				}
@@ -630,8 +801,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/warehouses",
-							"host": ["{{base_url}}"],
-							"path": ["warehouses"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"warehouses"
+							]
 						}
 					}
 				},
@@ -642,8 +817,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/warehouses/1",
-							"host": ["{{base_url}}"],
-							"path": ["warehouses", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"warehouses",
+								"1"
+							]
 						}
 					}
 				},
@@ -659,12 +839,16 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"warehouse_name\": \"Main Warehouse\",\n    \"location\": \"Building A\",\n    \"city\": \"New York\",\n    \"country\": \"USA\",\n    \"capacity\": 10000\n}"
+							"raw": "{\n    \"warehouse_name\": \"Main Warehouse\",\n    \"location\": \"Building A\",\n    \"address\": \"100 Industrial Park\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"country\": \"USA\",\n    \"postal_code\": \"10002\",\n    \"manager_name\": \"Bob Manager\",\n    \"phone\": \"+1234567890\",\n    \"capacity\": 10000\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/warehouses",
-							"host": ["{{base_url}}"],
-							"path": ["warehouses"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"warehouses"
+							]
 						}
 					}
 				},
@@ -684,8 +868,13 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/warehouses/1",
-							"host": ["{{base_url}}"],
-							"path": ["warehouses", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"warehouses",
+								"1"
+							]
 						}
 					}
 				},
@@ -696,8 +885,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/warehouses/1",
-							"host": ["{{base_url}}"],
-							"path": ["warehouses", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"warehouses",
+								"1"
+							]
 						}
 					}
 				}
@@ -714,8 +908,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/stock",
-							"host": ["{{base_url}}"],
-							"path": ["stock"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stock"
+							]
 						}
 					}
 				},
@@ -726,8 +924,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/stock?include_product=true&include_warehouse=true",
-							"host": ["{{base_url}}"],
-							"path": ["stock"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stock"
+							],
 							"query": [
 								{
 									"key": "include_product",
@@ -748,8 +950,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/stock?product_id=1",
-							"host": ["{{base_url}}"],
-							"path": ["stock"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stock"
+							],
 							"query": [
 								{
 									"key": "product_id",
@@ -766,8 +972,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/stock?warehouse_id=1",
-							"host": ["{{base_url}}"],
-							"path": ["stock"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stock"
+							],
 							"query": [
 								{
 									"key": "warehouse_id",
@@ -784,8 +994,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/stock/1",
-							"host": ["{{base_url}}"],
-							"path": ["stock", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stock",
+								"1"
+							]
 						}
 					}
 				},
@@ -796,8 +1011,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/stock/lookup?product_id=1&warehouse_id=1",
-							"host": ["{{base_url}}"],
-							"path": ["stock", "lookup"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stock",
+								"lookup"
+							],
 							"query": [
 								{
 									"key": "product_id",
@@ -827,8 +1047,12 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/stock",
-							"host": ["{{base_url}}"],
-							"path": ["stock"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stock"
+							]
 						}
 					}
 				},
@@ -848,8 +1072,13 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/stock/1",
-							"host": ["{{base_url}}"],
-							"path": ["stock", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stock",
+								"1"
+							]
 						}
 					}
 				},
@@ -869,8 +1098,14 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/stock/1/adjust",
-							"host": ["{{base_url}}"],
-							"path": ["stock", "1", "adjust"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"stock",
+								"1",
+								"adjust"
+							]
 						}
 					}
 				}
@@ -887,8 +1122,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/customers",
-							"host": ["{{base_url}}"],
-							"path": ["customers"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"customers"
+							]
 						}
 					}
 				},
@@ -899,8 +1138,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/customers?search=john",
-							"host": ["{{base_url}}"],
-							"path": ["customers"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"customers"
+							],
 							"query": [
 								{
 									"key": "search",
@@ -917,8 +1160,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/customers/1",
-							"host": ["{{base_url}}"],
-							"path": ["customers", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"customers",
+								"1"
+							]
 						}
 					}
 				},
@@ -934,12 +1182,16 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"customer_name\": \"ABC Company\",\n    \"contact_person\": \"John Doe\",\n    \"email\": \"john@abccompany.com\",\n    \"phone\": \"+1234567890\",\n    \"address\": \"456 Business Ave\",\n    \"city\": \"Los Angeles\",\n    \"state\": \"CA\",\n    \"country\": \"USA\",\n    \"postal_code\": \"90001\",\n    \"credit_limit\": 50000.00\n}"
+							"raw": "{\n    \"customer_name\": \"ABC Company\",\n    \"contact_person\": \"John Doe\",\n    \"email\": \"john@abccompany.com\",\n    \"phone\": \"+1234567890\",\n    \"address\": \"456 Business Ave\",\n    \"city\": \"Los Angeles\",\n    \"state\": \"CA\",\n    \"country\": \"USA\",\n    \"postal_code\": \"90001\",\n    \"tax_id\": \"TAX-ABC-001\",\n    \"credit_limit\": 50000.00\n}"
 						},
 						"url": {
 							"raw": "{{base_url}}/customers",
-							"host": ["{{base_url}}"],
-							"path": ["customers"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"customers"
+							]
 						}
 					}
 				},
@@ -959,8 +1211,13 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/customers/1",
-							"host": ["{{base_url}}"],
-							"path": ["customers", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"customers",
+								"1"
+							]
 						}
 					}
 				},
@@ -971,8 +1228,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/customers/1",
-							"host": ["{{base_url}}"],
-							"path": ["customers", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"customers",
+								"1"
+							]
 						}
 					}
 				}
@@ -989,8 +1251,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/purchase-orders",
-							"host": ["{{base_url}}"],
-							"path": ["purchase-orders"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"purchase-orders"
+							]
 						}
 					}
 				},
@@ -1001,8 +1267,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/purchase-orders?status=pending",
-							"host": ["{{base_url}}"],
-							"path": ["purchase-orders"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"purchase-orders"
+							],
 							"query": [
 								{
 									"key": "status",
@@ -1020,8 +1290,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/purchase-orders?supplier_id=1",
-							"host": ["{{base_url}}"],
-							"path": ["purchase-orders"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"purchase-orders"
+							],
 							"query": [
 								{
 									"key": "supplier_id",
@@ -1038,8 +1312,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/purchase-orders/1?include_items=true",
-							"host": ["{{base_url}}"],
-							"path": ["purchase-orders", "1"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"purchase-orders",
+								"1"
+							],
 							"query": [
 								{
 									"key": "include_items",
@@ -1056,8 +1335,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/purchase-orders/generate-number",
-							"host": ["{{base_url}}"],
-							"path": ["purchase-orders", "generate-number"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"purchase-orders",
+								"generate-number"
+							]
 						}
 					}
 				},
@@ -1077,8 +1361,12 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/purchase-orders",
-							"host": ["{{base_url}}"],
-							"path": ["purchase-orders"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"purchase-orders"
+							]
 						}
 					}
 				},
@@ -1098,8 +1386,13 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/purchase-orders/1",
-							"host": ["{{base_url}}"],
-							"path": ["purchase-orders", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"purchase-orders",
+								"1"
+							]
 						}
 					}
 				},
@@ -1119,8 +1412,14 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/purchase-orders/1/status",
-							"host": ["{{base_url}}"],
-							"path": ["purchase-orders", "1", "status"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"purchase-orders",
+								"1",
+								"status"
+							]
 						}
 					}
 				},
@@ -1140,8 +1439,14 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/purchase-orders/1/items",
-							"host": ["{{base_url}}"],
-							"path": ["purchase-orders", "1", "items"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"purchase-orders",
+								"1",
+								"items"
+							]
 						}
 					}
 				},
@@ -1152,8 +1457,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/purchase-orders/1",
-							"host": ["{{base_url}}"],
-							"path": ["purchase-orders", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"purchase-orders",
+								"1"
+							]
 						}
 					}
 				}
@@ -1170,8 +1480,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/sales-orders",
-							"host": ["{{base_url}}"],
-							"path": ["sales-orders"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sales-orders"
+							]
 						}
 					}
 				},
@@ -1182,8 +1496,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/sales-orders?status=pending",
-							"host": ["{{base_url}}"],
-							"path": ["sales-orders"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sales-orders"
+							],
 							"query": [
 								{
 									"key": "status",
@@ -1201,8 +1519,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/sales-orders?payment_status=unpaid",
-							"host": ["{{base_url}}"],
-							"path": ["sales-orders"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sales-orders"
+							],
 							"query": [
 								{
 									"key": "payment_status",
@@ -1220,8 +1542,12 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/sales-orders?customer_id=1",
-							"host": ["{{base_url}}"],
-							"path": ["sales-orders"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sales-orders"
+							],
 							"query": [
 								{
 									"key": "customer_id",
@@ -1238,8 +1564,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/sales-orders/1?include_items=true&include_customer=true",
-							"host": ["{{base_url}}"],
-							"path": ["sales-orders", "1"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sales-orders",
+								"1"
+							],
 							"query": [
 								{
 									"key": "include_items",
@@ -1260,8 +1591,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/sales-orders/generate-number",
-							"host": ["{{base_url}}"],
-							"path": ["sales-orders", "generate-number"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sales-orders",
+								"generate-number"
+							]
 						}
 					}
 				},
@@ -1281,8 +1617,12 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/sales-orders",
-							"host": ["{{base_url}}"],
-							"path": ["sales-orders"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sales-orders"
+							]
 						}
 					}
 				},
@@ -1302,8 +1642,13 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/sales-orders/1",
-							"host": ["{{base_url}}"],
-							"path": ["sales-orders", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sales-orders",
+								"1"
+							]
 						}
 					}
 				},
@@ -1323,8 +1668,14 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/sales-orders/1/status",
-							"host": ["{{base_url}}"],
-							"path": ["sales-orders", "1", "status"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sales-orders",
+								"1",
+								"status"
+							]
 						}
 					}
 				},
@@ -1344,8 +1695,14 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/sales-orders/1/payment-status",
-							"host": ["{{base_url}}"],
-							"path": ["sales-orders", "1", "payment-status"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sales-orders",
+								"1",
+								"payment-status"
+							]
 						}
 					}
 				},
@@ -1365,8 +1722,14 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/sales-orders/1/items",
-							"host": ["{{base_url}}"],
-							"path": ["sales-orders", "1", "items"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sales-orders",
+								"1",
+								"items"
+							]
 						}
 					}
 				},
@@ -1377,8 +1740,14 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/sales-orders/1/cancel",
-							"host": ["{{base_url}}"],
-							"path": ["sales-orders", "1", "cancel"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"sales-orders",
+								"1",
+								"cancel"
+							]
 						}
 					}
 				}
@@ -1395,8 +1764,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/inventory/transactions",
-							"host": ["{{base_url}}"],
-							"path": ["inventory", "transactions"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"inventory",
+								"transactions"
+							]
 						}
 					}
 				},
@@ -1407,8 +1781,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/inventory/transactions?type=purchase",
-							"host": ["{{base_url}}"],
-							"path": ["inventory", "transactions"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"inventory",
+								"transactions"
+							],
 							"query": [
 								{
 									"key": "type",
@@ -1426,8 +1805,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/inventory/transactions?product_id=1",
-							"host": ["{{base_url}}"],
-							"path": ["inventory", "transactions"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"inventory",
+								"transactions"
+							],
 							"query": [
 								{
 									"key": "product_id",
@@ -1444,8 +1828,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/inventory/transactions?warehouse_id=1",
-							"host": ["{{base_url}}"],
-							"path": ["inventory", "transactions"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"inventory",
+								"transactions"
+							],
 							"query": [
 								{
 									"key": "warehouse_id",
@@ -1462,8 +1851,14 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/inventory/transactions/1",
-							"host": ["{{base_url}}"],
-							"path": ["inventory", "transactions", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"inventory",
+								"transactions",
+								"1"
+							]
 						}
 					}
 				},
@@ -1474,8 +1869,16 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/inventory/transactions/reference/purchase_order/1",
-							"host": ["{{base_url}}"],
-							"path": ["inventory", "transactions", "reference", "purchase_order", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"inventory",
+								"transactions",
+								"reference",
+								"purchase_order",
+								"1"
+							]
 						}
 					}
 				},
@@ -1495,8 +1898,13 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/inventory/transactions",
-							"host": ["{{base_url}}"],
-							"path": ["inventory", "transactions"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"inventory",
+								"transactions"
+							]
 						}
 					}
 				},
@@ -1507,8 +1915,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/inventory/adjustments",
-							"host": ["{{base_url}}"],
-							"path": ["inventory", "adjustments"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"inventory",
+								"adjustments"
+							]
 						}
 					}
 				},
@@ -1519,8 +1932,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/inventory/adjustments?product_id=1",
-							"host": ["{{base_url}}"],
-							"path": ["inventory", "adjustments"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"inventory",
+								"adjustments"
+							],
 							"query": [
 								{
 									"key": "product_id",
@@ -1537,8 +1955,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/inventory/adjustments?warehouse_id=1",
-							"host": ["{{base_url}}"],
-							"path": ["inventory", "adjustments"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"inventory",
+								"adjustments"
+							],
 							"query": [
 								{
 									"key": "warehouse_id",
@@ -1555,8 +1978,13 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/inventory/adjustments?reason=damage",
-							"host": ["{{base_url}}"],
-							"path": ["inventory", "adjustments"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"inventory",
+								"adjustments"
+							],
 							"query": [
 								{
 									"key": "reason",
@@ -1574,8 +2002,14 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/inventory/adjustments/1",
-							"host": ["{{base_url}}"],
-							"path": ["inventory", "adjustments", "1"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"inventory",
+								"adjustments",
+								"1"
+							]
 						}
 					}
 				},
@@ -1595,8 +2029,13 @@
 						},
 						"url": {
 							"raw": "{{base_url}}/inventory/adjustments",
-							"host": ["{{base_url}}"],
-							"path": ["inventory", "adjustments"]
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"inventory",
+								"adjustments"
+							]
 						}
 					}
 				},
@@ -1607,8 +2046,14 @@
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/inventory/reports/movements?start_date=2026-01-01&end_date=2026-01-31",
-							"host": ["{{base_url}}"],
-							"path": ["inventory", "reports", "movements"],
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"inventory",
+								"reports",
+								"movements"
+							],
 							"query": [
 								{
 									"key": "start_date",
