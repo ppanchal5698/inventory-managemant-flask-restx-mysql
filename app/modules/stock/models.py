@@ -24,6 +24,9 @@ class Stock(BaseModel):
         db.Index('idx_warehouse_quantity', 'warehouse_id', 'quantity_on_hand'),
     )
 
+    product = db.relationship('Product', back_populates='stock_entries')
+    warehouse = db.relationship('Warehouse', back_populates='stock_entries')
+
     def to_dict(self, include_product=False, include_warehouse=False):
         """Serialize stock to dictionary."""
         data = {

@@ -1,25 +1,23 @@
-# Brand schemas
+# Brand schemas (Pydantic)
 
-from marshmallow import Schema, fields, validate
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel, Field, ConfigDict
 
+class BrandBase(BaseModel):
+    """Base brand schema."""
+    brand_name: str = Field(..., max_length=100)
+    manufacturer_name: Optional[str] = Field(None, max_length=150)
+    description: Optional[str] = None
+    is_active: bool = True
 
-class BrandSchema(Schema):
-    """Brand serialization schema."""
-    brand_id = fields.Int(dump_only=True)
-    brand_name = fields.Str(required=True, validate=validate.Length(max=100))
-    manufacturer_name = fields.Str(validate=validate.Length(max=150))
-    description = fields.Str()
-    is_active = fields.Bool()
-    created_at = fields.DateTime(dump_only=True)
+    model_config = ConfigDict(from_attributes=True)
 
-
-class BrandCreateSchema(Schema):
+class BrandCreate(BrandBase):
     """Brand creation schema."""
-    brand_name = fields.Str(required=True, validate=validate.Length(max=100))
-    manufacturer_name = fields.Str(validate=validate.Length(max=150))
-    description = fields.Str()
+    pass
 
-
-brand_schema = BrandSchema()
-brands_schema = BrandSchema(many=True)
-brand_create_schema = BrandCreateSchema()
+class BrandResponse(BrandBase):
+    """Brand response schema."""
+    brand_id: int
+    created_at: datetime

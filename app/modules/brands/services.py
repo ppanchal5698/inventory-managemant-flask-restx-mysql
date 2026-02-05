@@ -1,9 +1,10 @@
-# Brand services
+# Brand services (Async)
 
 from typing import Optional, List
-from app.extensions import db, cache
+from sqlalchemy import select
+from app.extensions import db
 from app.modules.brands.models import Brand
-from app.core.cache import CacheKeyPrefixes
+from app.core.cache import CacheKeyPrefixes, invalidate_cache, cached_list, cached_item
 
 CACHE_PREFIX = CacheKeyPrefixes.BRANDS
 CACHE_TIMEOUT = 300  # 5 minutes
@@ -13,57 +14,54 @@ class BrandService:
     """Brand management service."""
 
     @staticmethod
-    @cache.memoize(timeout=CACHE_TIMEOUT)
-    def get_all(include_inactive: bool = False) -> List[Brand]:
+    @cached_list(CACHE_PREFIX, timeout=CACHE_TIMEOUT)
+    async def get_all(include_inactive: bool = False) -> List[Brand]:
         """Get all brands."""
-        query = Brand.query
+        stmt = select(Brand).order_by(Brand.brand_name)
         if not include_inactive:
-            query = query.filter_by(is_active=True)
-        return query.order_by(Brand.brand_name).all()
+            stmt = stmt.filter_by(is_active=True)
+        result = await db.session.execute(stmt)
+        return result.scalars().all()
 
     @staticmethod
-    @cache.memoize(timeout=CACHE_TIMEOUT)
-    def get_by_id(brand_id: int) -> Optional[Brand]:
+    @cached_item(CACHE_PREFIX, timeout=CACHE_TIMEOUT)
+    async def get_by_id(brand_id: int) -> Optional[Brand]:
         """Get brand by ID."""
-        return Brand.query.get(brand_id)
+        return await db.session.get(Brand, brand_id)
 
     @staticmethod
-    @cache.memoize(timeout=CACHE_TIMEOUT)
-    def get_by_name(brand_name: str) -> Optional[Brand]:
+    async def get_by_name(brand_name: str) -> Optional[Brand]:
         """Get brand by name."""
-        return Brand.query.filter_by(brand_name=brand_name).first()
+        stmt = select(Brand).filter_by(brand_name=brand_name)
+        result = await db.session.execute(stmt)
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def create(**kwargs) -> Brand:
+    async def create(**kwargs) -> Brand:
         """Create a new brand."""
         brand = Brand(**kwargs)
         db.session.add(brand)
-        db.session.commit()
+        await db.session.commit()
         # Invalidate cache
-        cache.delete_memoized(BrandService.get_all)
+        await invalidate_cache(CACHE_PREFIX)
         return brand
 
     @staticmethod
-    def update(brand: Brand, **kwargs) -> Brand:
+    async def update(brand: Brand, **kwargs) -> Brand:
         """Update brand."""
-        old_name = brand.brand_name
+        # old_name = brand.brand_name
         for key, value in kwargs.items():
             if hasattr(brand, key) and key != 'brand_id':
                 setattr(brand, key, value)
-        db.session.commit()
+        await db.session.commit()
         # Invalidate cache
-        cache.delete_memoized(BrandService.get_all)
-        cache.delete_memoized(BrandService.get_by_id, brand.brand_id)
-        cache.delete_memoized(BrandService.get_by_name, old_name)
-        cache.delete_memoized(BrandService.get_by_name, brand.brand_name)
+        await invalidate_cache(CACHE_PREFIX, brand.brand_id)
         return brand
 
     @staticmethod
-    def delete(brand: Brand) -> None:
+    async def delete(brand: Brand) -> None:
         """Soft delete brand."""
         brand.is_active = False
-        db.session.commit()
+        await db.session.commit()
         # Invalidate cache
-        cache.delete_memoized(BrandService.get_all)
-        cache.delete_memoized(BrandService.get_by_id, brand.brand_id)
-        cache.delete_memoized(BrandService.get_by_name, brand.brand_name)
+        await invalidate_cache(CACHE_PREFIX, brand.brand_id)

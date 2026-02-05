@@ -1,14 +1,12 @@
 # Categories API endpoints using Flask-RESTX
 
 from flask import request
-from flask_login import login_required
+from flask_jwt_extended import jwt_required
 from flask_restx import Namespace, Resource, fields
 
-from app.core.utils import api_response, require_role
+from app.core.utils import api_response, require_role, async_route
 from app.modules.categories.schemas import (
-    categories_schema,
-    category_create_schema,
-    category_schema,
+    CategoryCreate
 )
 from app.modules.categories.services import CategoryService
 
@@ -34,82 +32,78 @@ category_create_model = categories_ns.model('CategoryCreate', {
 @categories_ns.route('')
 class CategoryList(Resource):
     @categories_ns.doc('list_categories')
-    @login_required
-    def get(self):
+    @jwt_required()
+    @async_route
+    async def get(self):
         """Get all categories."""
         root_only = request.args.get('root_only', 'false').lower() == 'true'
         if root_only:
-            categories = CategoryService.get_root_categories()
+            categories = await CategoryService.get_root_categories()
         else:
-            categories = CategoryService.get_all()
+            categories = await CategoryService.get_all()
         return api_response(data=[c.to_dict() for c in categories])
 
     @categories_ns.expect(category_create_model)
     @categories_ns.doc('create_category')
-    @login_required
     @require_role('admin', 'manager')
-    def post(self):
+    @async_route
+    async def post(self):
         """Create a new category."""
-        data = request.get_json()
-        errors = category_create_schema.validate(data)
-        if errors:
-            return api_response(message=errors, status_code=400)
+        try:
+            data = CategoryCreate.model_validate(request.get_json())
+        except Exception as e:
+            return api_response(message=str(e), status_code=400)
 
-        category = CategoryService.create(**data)
+        category = await CategoryService.create(**data.model_dump())
         return api_response(data=category.to_dict(), message='Category created', status_code=201)
 
 
 @categories_ns.route('/<int:category_id>')
 class CategoryDetail(Resource):
     @categories_ns.doc('get_category')
-    @login_required
-    def get(self, category_id):
+    @jwt_required()
+    @async_route
+    async def get(self, category_id):
         """Get category by ID."""
         include_children = request.args.get('include_children', 'false').lower() == 'true'
-        category = CategoryService.get_by_id(category_id)
+        category = await CategoryService.get_by_id(category_id, load_children=include_children)
         if not category:
             return api_response(message='Category not found', status_code=404)
-
-        # If include_children is True, we need to ensure the object is attached to a session
-        # to avoid DetachedInstanceError when accessing subcategories
-        if include_children:
-            from app.extensions import db
-            # Merge the potentially detached cached object into the current session
-            category = db.session.merge(category)
 
         return api_response(data=category.to_dict(include_children=include_children))
 
     @categories_ns.doc('update_category')
-    @login_required
     @require_role('admin', 'manager')
-    def put(self, category_id):
+    @async_route
+    async def put(self, category_id):
         """Update category."""
-        category = CategoryService.get_by_id(category_id)
+        category = await CategoryService.get_by_id(category_id)
         if not category:
             return api_response(message='Category not found', status_code=404)
 
         data = request.get_json()
-        category = CategoryService.update(category, **data)
+        category = await CategoryService.update(category, **data)
         return api_response(data=category.to_dict(), message='Category updated')
 
     @categories_ns.doc('delete_category')
-    @login_required
     @require_role('admin')
-    def delete(self, category_id):
+    @async_route
+    async def delete(self, category_id):
         """Delete category."""
-        category = CategoryService.get_by_id(category_id)
+        category = await CategoryService.get_by_id(category_id)
         if not category:
             return api_response(message='Category not found', status_code=404)
 
-        CategoryService.delete(category)
+        await CategoryService.delete(category)
         return api_response(message='Category deleted')
 
 
 @categories_ns.route('/<int:category_id>/subcategories')
 class CategorySubcategories(Resource):
     @categories_ns.doc('get_subcategories')
-    @login_required
-    def get(self, category_id):
+    @jwt_required()
+    @async_route
+    async def get(self, category_id):
         """Get subcategories of a category."""
-        subcategories = CategoryService.get_subcategories(category_id)
+        subcategories = await CategoryService.get_subcategories(category_id)
         return api_response(data=[c.to_dict() for c in subcategories])

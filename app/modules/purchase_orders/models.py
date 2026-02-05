@@ -26,6 +26,9 @@ class PurchaseOrder(BaseModel):
     # Relationships
     items = db.relationship('PurchaseOrderItem', backref='purchase_order',
                             lazy='dynamic', cascade='all, delete-orphan')
+    creator = db.relationship('User', back_populates='purchase_orders')
+    supplier = db.relationship('Supplier', back_populates='purchase_orders')
+    warehouse = db.relationship('Warehouse', back_populates='purchase_orders')
 
     def calculate_total(self):
         """Calculate total amount from items."""
@@ -69,6 +72,7 @@ class PurchaseOrderItem(db.Model):
                       nullable=False, index=True)
     product_id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), db.ForeignKey('products.product_id', ondelete='RESTRICT', onupdate='CASCADE'),
                            nullable=False, index=True)
+    product = db.relationship('Product', back_populates='purchase_order_items')
     quantity = db.Column(db.Integer, nullable=False)
     unit_price = db.Column(db.Numeric(12, 2), nullable=False)
     received_quantity = db.Column(db.Integer, nullable=False, default=0)

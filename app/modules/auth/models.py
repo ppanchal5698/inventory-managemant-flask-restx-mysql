@@ -1,51 +1,61 @@
 # User model
 
-from flask_login import UserMixin
+from typing import Optional, List, TYPE_CHECKING
+from sqlalchemy import String, Boolean, Enum, BigInteger, Integer
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.core.database import BaseModel
-from app.extensions import db, login_manager
+# Note: we don't import db from extensions to avoid circular imports if possible,
+# but BaseModel uses it.
 
+if TYPE_CHECKING:
+    from app.modules.purchase_orders.models import PurchaseOrder
+    from app.modules.sales_orders.models import SalesOrder
 
-class User(UserMixin, BaseModel):
+class User(BaseModel):
     """User model for authentication and authorization."""
     __tablename__ = 'users'
 
-    user_id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True, autoincrement=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    first_name = db.Column(db.String(100), nullable=False)
-    last_name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    phone = db.Column(db.String(20))
-    role = db.Column(db.Enum('admin', 'manager', 'staff', 'viewer', name='user_role'),
+    user_id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
+    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    first_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    role: Mapped[str] = mapped_column(Enum('admin', 'manager', 'staff', 'viewer', name='user_role'),
                      nullable=False, default='staff')
-    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     # Relationships
-    purchase_orders = db.relationship('PurchaseOrder', backref='creator',
-                                       foreign_keys='PurchaseOrder.created_by', lazy='dynamic')
-    sales_orders = db.relationship('SalesOrder', backref='creator',
-                                    foreign_keys='SalesOrder.created_by', lazy='dynamic')
-
-    def get_id(self):
-        """Return user_id for Flask-Login."""
-        return str(self.user_id)
+    # Replaced lazy='dynamic' with standard relationship.
+    # Use service methods for filtering.
+    purchase_orders: Mapped[List["PurchaseOrder"]] = relationship(
+        'PurchaseOrder',
+        back_populates='creator',
+        foreign_keys='PurchaseOrder.created_by'
+    )
+    sales_orders: Mapped[List["SalesOrder"]] = relationship(
+        'SalesOrder',
+        back_populates='creator',
+        foreign_keys='SalesOrder.created_by'
+    )
 
     @property
-    def full_name(self):
+    def full_name(self) -> str:
         """Return full name."""
         return f"{self.first_name} {self.last_name}"
 
-    def set_password(self, password):
+    def set_password(self, password: str) -> None:
         """Hash and set the user's password."""
         self.password_hash = generate_password_hash(password)
 
-    def check_password(self, password):
+    def check_password(self, password: str) -> bool:
         """Check if the provided password matches the hash."""
         return check_password_hash(self.password_hash, password)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """Serialize user to dictionary."""
         return {
             'user_id': self.user_id,
@@ -61,9 +71,3 @@ class User(UserMixin, BaseModel):
 
     def __repr__(self):
         return f'<User {self.username}>'
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    """Load user by ID for Flask-Login."""
-    return User.query.get(int(user_id))

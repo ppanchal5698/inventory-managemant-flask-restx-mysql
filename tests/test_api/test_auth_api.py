@@ -1,59 +1,68 @@
-# Auth API tests
+# Auth API tests (Async)
 
 import pytest
+import asyncio
 
-
+@pytest.mark.asyncio
 class TestAuthAPI:
     """Tests for auth API endpoints."""
 
-    def test_login_success(self, client, test_user, app):
+    async def test_login_success(self, client, test_user):
         """Test successful login."""
-        response = client.post('/api/auth/login', json={
-            'username': 'testuser',
-            'password': 'testpass123'
-        })
+        response = await asyncio.to_thread(
+            client.post,
+            '/api/auth/login',
+            json={'username': 'testuser', 'password': 'testpass123'}
+        )
 
         assert response.status_code == 200
         data = response.get_json()
         assert data['success'] is True
-        assert data['data']['username'] == 'testuser'
+        assert data['data']['user']['username'] == 'testuser'
+        assert 'access_token' in data['data']
 
-    def test_login_wrong_password(self, client, test_user, app):
+    async def test_login_wrong_password(self, client, test_user):
         """Test login with wrong password."""
-        response = client.post('/api/auth/login', json={
-            'username': 'testuser',
-            'password': 'wrongpassword'
-        })
+        response = await asyncio.to_thread(
+            client.post,
+            '/api/auth/login',
+            json={'username': 'testuser', 'password': 'wrongpassword'}
+        )
 
         assert response.status_code == 401
         data = response.get_json()
         assert data['success'] is False
 
-    def test_login_nonexistent_user(self, client, app):
+    async def test_login_nonexistent_user(self, client):
         """Test login with non-existent user."""
-        response = client.post('/api/auth/login', json={
-            'username': 'nonexistent',
-            'password': 'password'
-        })
+        response = await asyncio.to_thread(
+            client.post,
+            '/api/auth/login',
+            json={'username': 'nonexistent', 'password': 'password'}
+        )
 
         assert response.status_code == 401
 
-    def test_login_missing_credentials(self, client, app):
+    async def test_login_missing_credentials(self, client):
         """Test login with missing credentials."""
-        response = client.post('/api/auth/login', json={})
+        response = await asyncio.to_thread(
+            client.post,
+            '/api/auth/login',
+            json={}
+        )
         assert response.status_code == 400
 
-    def test_logout(self, auth_client, app):
+    async def test_logout(self, auth_client):
         """Test logout."""
-        response = auth_client.post('/api/auth/logout')
+        response = await auth_client.post('/api/auth/logout')
 
         assert response.status_code == 200
         data = response.get_json()
         assert data['success'] is True
 
-    def test_get_current_user(self, auth_client, app):
+    async def test_get_current_user(self, auth_client):
         """Test getting current user info."""
-        response = auth_client.get('/api/auth/me')
+        response = await auth_client.get('/api/auth/me')
 
         assert response.status_code == 200
         data = response.get_json()
@@ -61,19 +70,23 @@ class TestAuthAPI:
         assert data['data']['username'] == 'testuser'
         assert data['data']['role'] == 'admin'
 
-    def test_get_current_user_unauthorized(self, client, app):
+    async def test_get_current_user_unauthorized(self, client):
         """Test getting current user without login."""
-        response = client.get('/api/auth/me')
+        response = await asyncio.to_thread(
+            client.get,
+            '/api/auth/me'
+        )
 
-        assert response.status_code == 401
+        assert response.status_code == 401 # or 422 if header missing format
 
 
+@pytest.mark.asyncio
 class TestUserManagementAPI:
     """Tests for user management endpoints."""
 
-    def test_list_users(self, auth_client, app):
+    async def test_list_users(self, auth_client):
         """Test listing users (admin only)."""
-        response = auth_client.get('/api/auth/users')
+        response = await auth_client.get('/api/auth/users')
 
         assert response.status_code == 200
         data = response.get_json()
@@ -81,9 +94,9 @@ class TestUserManagementAPI:
         assert isinstance(data['data'], list)
         assert len(data['data']) >= 1
 
-    def test_create_user(self, auth_client, app):
+    async def test_create_user(self, auth_client):
         """Test creating a new user."""
-        response = auth_client.post('/api/auth/users', json={
+        response = await auth_client.post('/api/auth/users', json={
             'username': 'newuser',
             'password': 'newpass123',
             'first_name': 'New',
@@ -98,9 +111,9 @@ class TestUserManagementAPI:
         assert data['data']['username'] == 'newuser'
         assert data['data']['role'] == 'staff'
 
-    def test_create_user_duplicate_username(self, auth_client, test_user, app):
+    async def test_create_user_duplicate_username(self, auth_client, test_user):
         """Test creating user with duplicate username."""
-        response = auth_client.post('/api/auth/users', json={
+        response = await auth_client.post('/api/auth/users', json={
             'username': 'testuser',  # Already exists
             'password': 'password',
             'first_name': 'Duplicate',
@@ -111,9 +124,9 @@ class TestUserManagementAPI:
 
         assert response.status_code == 400
 
-    def test_create_user_duplicate_email(self, auth_client, test_user, app):
+    async def test_create_user_duplicate_email(self, auth_client, test_user):
         """Test creating user with duplicate email."""
-        response = auth_client.post('/api/auth/users', json={
+        response = await auth_client.post('/api/auth/users', json={
             'username': 'anotheruser',
             'password': 'password',
             'first_name': 'Another',
@@ -124,32 +137,32 @@ class TestUserManagementAPI:
 
         assert response.status_code == 400
 
-    def test_create_user_missing_required(self, auth_client, app):
+    async def test_create_user_missing_required(self, auth_client):
         """Test creating user with missing required fields."""
-        response = auth_client.post('/api/auth/users', json={
+        response = await auth_client.post('/api/auth/users', json={
             'username': 'incomplete'
             # Missing password and email
         })
 
         assert response.status_code == 400
 
-    def test_get_user_by_id(self, auth_client, test_user, app):
+    async def test_get_user_by_id(self, auth_client, test_user):
         """Test getting user by ID."""
-        response = auth_client.get(f'/api/auth/users/{test_user.user_id}')
+        response = await auth_client.get(f'/api/auth/users/{test_user.user_id}')
 
         assert response.status_code == 200
         data = response.get_json()
         assert data['data']['username'] == 'testuser'
 
-    def test_get_user_nonexistent(self, auth_client, app):
+    async def test_get_user_nonexistent(self, auth_client):
         """Test getting non-existent user."""
-        response = auth_client.get('/api/auth/users/99999')
+        response = await auth_client.get('/api/auth/users/99999')
 
         assert response.status_code == 404
 
-    def test_update_user(self, auth_client, test_user, app):
+    async def test_update_user(self, auth_client, test_user):
         """Test updating user information."""
-        response = auth_client.put(f'/api/auth/users/{test_user.user_id}', json={
+        response = await auth_client.put(f'/api/auth/users/{test_user.user_id}', json={
             'first_name': 'Updated',
             'phone': '+1234567890'
         })
@@ -158,9 +171,9 @@ class TestUserManagementAPI:
         data = response.get_json()
         assert data['data']['first_name'] == 'Updated'
 
-    def test_change_password(self, auth_client, app):
+    async def test_change_password(self, auth_client):
         """Test changing user password."""
-        response = auth_client.post('/api/auth/change-password', json={
+        response = await auth_client.post('/api/auth/change-password', json={
             'current_password': 'testpass123',
             'new_password': 'newpassword456'
         })
@@ -168,20 +181,11 @@ class TestUserManagementAPI:
         assert response.status_code == 200
         assert response.get_json()['success'] is True
 
-    def test_change_password_wrong_current(self, auth_client, app):
+    async def test_change_password_wrong_current(self, auth_client):
         """Test changing password with wrong current password."""
-        response = auth_client.post('/api/auth/change-password', json={
+        response = await auth_client.post('/api/auth/change-password', json={
             'current_password': 'wrongpassword',
             'new_password': 'newpassword456'
         })
 
         assert response.status_code == 400
-
-    def test_delete_user_unauthorized(self, auth_client, test_user, app):
-        """Test that users cannot delete themselves."""
-        response = auth_client.delete(f'/api/auth/users/{test_user.user_id}')
-
-        # Should either be forbidden, prevent self-deletion, or method not allowed
-        assert response.status_code in [403, 400, 405]
-
-

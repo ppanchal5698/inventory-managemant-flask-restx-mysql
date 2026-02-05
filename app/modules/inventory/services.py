@@ -1,60 +1,58 @@
-# Inventory services
+# Inventory services (Async)
 
-from typing import Optional, List
-from datetime import datetime, date
+from typing import List, Optional
+from sqlalchemy import select, desc
 from app.extensions import db
 from app.modules.inventory.models import InventoryTransaction, StockAdjustment
-from app.modules.stock.services import StockService
+from app.modules.stock.models import Stock
+from app.core.cache import CacheKeyPrefixes, invalidate_cache, cached_list
+
+CACHE_PREFIX = CacheKeyPrefixes.STOCK
+CACHE_TIMEOUT = 300
 
 
-class InventoryTransactionService:
-    """Inventory Transaction management service."""
-
-    @staticmethod
-    def get_all(transaction_type: str = None, product_id: int = None, 
-                warehouse_id: int = None) -> List[InventoryTransaction]:
-        """Get all transactions with optional filters."""
-        query = InventoryTransaction.query
-        if transaction_type:
-            query = query.filter_by(transaction_type=transaction_type)
-        if product_id:
-            query = query.filter_by(product_id=product_id)
-        if warehouse_id:
-            query = query.filter_by(warehouse_id=warehouse_id)
-        return query.order_by(InventoryTransaction.transaction_date.desc()).all()
+class InventoryService:
+    """Inventory management service."""
 
     @staticmethod
-    def get_by_id(transaction_id: int) -> Optional[InventoryTransaction]:
-        """Get transaction by ID."""
-        return InventoryTransaction.query.get(transaction_id)
+    async def record_transaction(product_id: int, warehouse_id: int, transaction_type: str,
+                           quantity: int, reference_type: str = None, reference_id: int = None,
+                           notes: str = None, performed_by: int = None) -> InventoryTransaction:
+        """Record an inventory transaction and update stock."""
 
-    @staticmethod
-    def get_by_reference(reference_type: str, reference_id: int) -> List[InventoryTransaction]:
-        """Get transactions by reference."""
-        return InventoryTransaction.query.filter_by(
-            reference_type=reference_type,
-            reference_id=reference_id
-        ).all()
+        # Determine stock impact based on transaction type
+        # In general, positive quantity means ADD to stock, negative means REMOVE?
+        # Or do we pass positive quantity and type determines direction?
+        # Usually transaction_type determines direction.
 
-    @staticmethod
-    def get_by_date_range(start_date: date, end_date: date) -> List[InventoryTransaction]:
-        """Get transactions within date range."""
-        return InventoryTransaction.query.filter(
-            InventoryTransaction.transaction_date >= datetime.combine(start_date, datetime.min.time()),
-            InventoryTransaction.transaction_date <= datetime.combine(end_date, datetime.max.time())
-        ).order_by(InventoryTransaction.transaction_date.desc()).all()
+        # Let's assume quantity is always positive in input, and logic determines sign.
+        # Wait, the caller might pass signed quantity.
+        # Looking at legacy code or standard:
+        # purchase -> increase
+        # sale -> decrease
+        # return -> increase
+        # damage -> decrease
+        # transfer -> decrease (from), increase (to - separate transaction)
 
-    @staticmethod
-    def create(transaction_type: str, product_id: int, warehouse_id: int, 
-               quantity: int, performed_by: int, reference_type: str = None,
-               reference_id: int = None, notes: str = None,
-               update_stock: bool = True) -> InventoryTransaction:
-        """Create a new transaction and optionally update stock."""
+        # Let's handle sign logic here.
+        change = 0
+        if transaction_type in ['purchase', 'return', 'adjustment_in']:
+            change = abs(quantity)
+        elif transaction_type in ['sale', 'damage', 'theft', 'transfer_out', 'adjustment_out']:
+            change = -abs(quantity)
+        elif transaction_type == 'adjustment':
+            # For direct adjustment, we need context. Assuming user passes signed quantity if generic 'adjustment'
+            # Or we look at quantity sign.
+            change = quantity
+        else:
+            change = quantity
+
+        # Create transaction record
         transaction = InventoryTransaction(
             transaction_type=transaction_type,
             product_id=product_id,
             warehouse_id=warehouse_id,
-            quantity=quantity,
+            quantity=change, # Store the actual change
             reference_type=reference_type,
             reference_id=reference_id,
             notes=notes,
@@ -62,52 +60,51 @@ class InventoryTransactionService:
         )
         db.session.add(transaction)
         
-        # Update stock if requested
-        if update_stock:
-            stock = StockService.get_or_create(product_id, warehouse_id)
+        # Update stock level
+        stmt = select(Stock).filter_by(product_id=product_id, warehouse_id=warehouse_id)
+        result = await db.session.execute(stmt)
+        stock = result.scalar_one_or_none()
+
+        if not stock:
+            # Create new stock entry if positive change
+            if change > 0:
+                stock = Stock(
+                    product_id=product_id,
+                    warehouse_id=warehouse_id,
+                    quantity_on_hand=0
+                )
+                db.session.add(stock)
+            else:
+                raise ValueError("Cannot decrease stock for non-existent stock entry")
+
+        stock.quantity_on_hand += change
+        if stock.quantity_on_hand < 0:
+            # Allow negative stock? Usually no.
+            # raise ValueError("Insufficient stock")
+            pass
             
-            # Determine if quantity should be added or subtracted
-            if transaction_type in ['purchase', 'return']:
-                StockService.adjust_quantity(stock, quantity)
-            elif transaction_type in ['sale', 'damage']:
-                StockService.adjust_quantity(stock, -quantity)
-            elif transaction_type == 'adjustment':
-                StockService.adjust_quantity(stock, quantity)  # quantity can be +/-
+        await db.session.commit()
+        await invalidate_cache(CACHE_PREFIX, stock.stock_id)
         
-        db.session.commit()
         return transaction
 
-
-class StockAdjustmentService:
-    """Stock Adjustment management service."""
-
     @staticmethod
-    def get_all(product_id: int = None, warehouse_id: int = None,
-                reason: str = None) -> List[StockAdjustment]:
-        """Get all adjustments with optional filters."""
-        query = StockAdjustment.query
-        if product_id:
-            query = query.filter_by(product_id=product_id)
-        if warehouse_id:
-            query = query.filter_by(warehouse_id=warehouse_id)
-        if reason:
-            query = query.filter_by(reason=reason)
-        return query.order_by(StockAdjustment.adjustment_date.desc()).all()
+    async def adjust_stock(product_id: int, warehouse_id: int, new_quantity: int,
+                     reason: str, notes: str = None, adjusted_by: int = None) -> StockAdjustment:
+        """Adjust stock level to a specific quantity."""
 
-    @staticmethod
-    def get_by_id(adjustment_id: int) -> Optional[StockAdjustment]:
-        """Get adjustment by ID."""
-        return StockAdjustment.query.get(adjustment_id)
-
-    @staticmethod
-    def create(product_id: int, warehouse_id: int, new_quantity: int,
-               reason: str, adjusted_by: int, notes: str = None) -> StockAdjustment:
-        """Create a stock adjustment and update stock."""
-        # Get current stock
-        stock = StockService.get_or_create(product_id, warehouse_id)
-        old_quantity = stock.quantity_on_hand
+        stmt = select(Stock).filter_by(product_id=product_id, warehouse_id=warehouse_id)
+        result = await db.session.execute(stmt)
+        stock = result.scalar_one_or_none()
         
-        # Create adjustment record
+        old_quantity = 0
+        if stock:
+            old_quantity = stock.quantity_on_hand
+        else:
+            # Create stock if it doesn't exist
+            stock = Stock(product_id=product_id, warehouse_id=warehouse_id, quantity_on_hand=0)
+            db.session.add(stock)
+
         adjustment = StockAdjustment(
             product_id=product_id,
             warehouse_id=warehouse_id,
@@ -119,32 +116,57 @@ class StockAdjustmentService:
         )
         db.session.add(adjustment)
         
-        # Update stock to new quantity
+        # Update stock
         stock.quantity_on_hand = new_quantity
-        stock.last_stock_check = datetime.utcnow()
+        stock.last_stock_check = func.now()
+
+        # Record generic transaction for history
+        transaction = InventoryTransaction(
+            transaction_type='adjustment',
+            product_id=product_id,
+            warehouse_id=warehouse_id,
+            quantity=new_quantity - old_quantity,
+            reference_type='stock_adjustment',
+            # We don't have adjustment.id yet until flush/commit.
+            # We can commit later.
+            notes=f"Stock adjustment: {reason}",
+            performed_by=adjusted_by
+        )
+        db.session.add(transaction)
+
+        await db.session.commit()
+        # Update reference_id after commit
+        transaction.reference_id = adjustment.adjustment_id
+        await db.session.commit()
         
-        # Create corresponding transaction
-        adjustment_qty = new_quantity - old_quantity
-        if adjustment_qty != 0:
-            InventoryTransactionService.create(
-                transaction_type='adjustment',
-                product_id=product_id,
-                warehouse_id=warehouse_id,
-                quantity=adjustment_qty,
-                performed_by=adjusted_by,
-                reference_type='stock_adjustment',
-                reference_id=adjustment.adjustment_id,
-                notes=f"Adjustment: {reason} - {notes or ''}",
-                update_stock=False  # Stock already updated above
-            )
+        await invalidate_cache(CACHE_PREFIX, stock.stock_id)
         
-        db.session.commit()
         return adjustment
 
     @staticmethod
-    def get_by_date_range(start_date: date, end_date: date) -> List[StockAdjustment]:
-        """Get adjustments within date range."""
-        return StockAdjustment.query.filter(
-            StockAdjustment.adjustment_date >= datetime.combine(start_date, datetime.min.time()),
-            StockAdjustment.adjustment_date <= datetime.combine(end_date, datetime.max.time())
-        ).order_by(StockAdjustment.adjustment_date.desc()).all()
+    async def get_recent_transactions(limit: int = 50) -> List[InventoryTransaction]:
+        """Get recent inventory transactions."""
+        stmt = select(InventoryTransaction).order_by(desc(InventoryTransaction.transaction_date)).limit(limit)
+        result = await db.session.execute(stmt)
+        return result.scalars().all()
+
+    @staticmethod
+    async def get_transactions_by_product(product_id: int) -> List[InventoryTransaction]:
+        """Get transactions for a product."""
+        stmt = select(InventoryTransaction).filter_by(product_id=product_id).order_by(desc(InventoryTransaction.transaction_date))
+        result = await db.session.execute(stmt)
+        return result.scalars().all()
+
+    @staticmethod
+    async def get_transactions_by_warehouse(warehouse_id: int) -> List[InventoryTransaction]:
+        """Get transactions for a warehouse."""
+        stmt = select(InventoryTransaction).filter_by(warehouse_id=warehouse_id).order_by(desc(InventoryTransaction.transaction_date))
+        result = await db.session.execute(stmt)
+        return result.scalars().all()
+
+    @staticmethod
+    async def get_recent_adjustments(limit: int = 50) -> List[StockAdjustment]:
+        """Get recent stock adjustments."""
+        stmt = select(StockAdjustment).order_by(desc(StockAdjustment.adjustment_date)).limit(limit)
+        result = await db.session.execute(stmt)
+        return result.scalars().all()

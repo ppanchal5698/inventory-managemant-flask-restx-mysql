@@ -1,9 +1,11 @@
-# Category services
+# Category services (Async)
 
 from typing import Optional, List
-from app.extensions import db, cache
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from app.extensions import db
 from app.modules.categories.models import Category
-from app.core.cache import CacheKeyPrefixes, invalidate_cache
+from app.core.cache import CacheKeyPrefixes, invalidate_cache, cached_list, cached_item
 
 CACHE_PREFIX = CacheKeyPrefixes.CATEGORIES
 CACHE_TIMEOUT = 300  # 5 minutes
@@ -13,28 +15,35 @@ class CategoryService:
     """Category management service."""
 
     @staticmethod
-    @cache.memoize(timeout=CACHE_TIMEOUT)
-    def get_all(include_inactive: bool = False) -> List[Category]:
+    @cached_list(CACHE_PREFIX, timeout=CACHE_TIMEOUT)
+    async def get_all(include_inactive: bool = False) -> List[Category]:
         """Get all categories."""
-        query = Category.query
+        stmt = select(Category)
         if not include_inactive:
-            query = query.filter_by(is_active=True)
-        return query.all()
+            stmt = stmt.filter_by(is_active=True)
+        result = await db.session.execute(stmt)
+        return result.scalars().all()
 
     @staticmethod
-    @cache.memoize(timeout=CACHE_TIMEOUT)
-    def get_root_categories() -> List[Category]:
+    @cached_list(CACHE_PREFIX, timeout=CACHE_TIMEOUT)
+    async def get_root_categories() -> List[Category]:
         """Get all root categories (no parent)."""
-        return Category.query.filter_by(parent_category_id=None, is_active=True).all()
+        stmt = select(Category).filter_by(parent_category_id=None, is_active=True)
+        result = await db.session.execute(stmt)
+        return result.scalars().all()
 
     @staticmethod
-    @cache.memoize(timeout=CACHE_TIMEOUT)
-    def get_by_id(category_id: int) -> Optional[Category]:
+    @cached_item(CACHE_PREFIX, timeout=CACHE_TIMEOUT)
+    async def get_by_id(category_id: int, load_children: bool = False) -> Optional[Category]:
         """Get category by ID."""
-        return Category.query.get(category_id)
+        if load_children:
+            stmt = select(Category).options(selectinload(Category.subcategories)).filter_by(category_id=category_id)
+            result = await db.session.execute(stmt)
+            return result.scalar_one_or_none()
+        return await db.session.get(Category, category_id)
 
     @staticmethod
-    def create(category_name: str, parent_category_id: int = None, 
+    async def create(category_name: str, parent_category_id: int = None,
                description: str = None) -> Category:
         """Create a new category."""
         category = Category(
@@ -43,38 +52,34 @@ class CategoryService:
             description=description
         )
         db.session.add(category)
-        db.session.commit()
+        await db.session.commit()
         # Invalidate cache
-        cache.delete_memoized(CategoryService.get_all)
-        cache.delete_memoized(CategoryService.get_root_categories)
+        await invalidate_cache(CACHE_PREFIX)
         return category
 
     @staticmethod
-    def update(category: Category, **kwargs) -> Category:
+    async def update(category: Category, **kwargs) -> Category:
         """Update category."""
         for key, value in kwargs.items():
             if hasattr(category, key) and key != 'category_id':
                 setattr(category, key, value)
-        db.session.commit()
+        await db.session.commit()
         # Invalidate cache
-        cache.delete_memoized(CategoryService.get_all)
-        cache.delete_memoized(CategoryService.get_root_categories)
-        cache.delete_memoized(CategoryService.get_by_id, category.category_id)
-        cache.delete_memoized(CategoryService.get_subcategories, category.parent_category_id)
+        await invalidate_cache(CACHE_PREFIX, category.category_id)
         return category
 
     @staticmethod
-    def delete(category: Category) -> None:
+    async def delete(category: Category) -> None:
         """Soft delete category."""
         category.is_active = False
-        db.session.commit()
+        await db.session.commit()
         # Invalidate cache
-        cache.delete_memoized(CategoryService.get_all)
-        cache.delete_memoized(CategoryService.get_root_categories)
-        cache.delete_memoized(CategoryService.get_by_id, category.category_id)
+        await invalidate_cache(CACHE_PREFIX, category.category_id)
 
     @staticmethod
-    @cache.memoize(timeout=CACHE_TIMEOUT)
-    def get_subcategories(category_id: int) -> List[Category]:
+    @cached_list(CACHE_PREFIX, timeout=CACHE_TIMEOUT)
+    async def get_subcategories(category_id: int) -> List[Category]:
         """Get subcategories of a category."""
-        return Category.query.filter_by(parent_category_id=category_id, is_active=True).all()
+        stmt = select(Category).filter_by(parent_category_id=category_id, is_active=True)
+        result = await db.session.execute(stmt)
+        return result.scalars().all()

@@ -1,53 +1,51 @@
-# Purchase Order schemas
+# Purchase Order schemas (Pydantic)
 
-from marshmallow import Schema, fields, validate
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Optional, List, Literal
+from pydantic import BaseModel, Field, ConfigDict
 
+class PurchaseOrderItemBase(BaseModel):
+    """Base purchase order item schema."""
+    product_id: int
+    quantity: int = Field(..., gt=0)
+    unit_price: Decimal = Field(..., ge=0)
+    received_quantity: int = Field(0, ge=0)
 
-class PurchaseOrderItemSchema(Schema):
-    """Purchase Order Item schema."""
-    po_item_id = fields.Int(dump_only=True)
-    po_id = fields.Int(dump_only=True)
-    product_id = fields.Int(required=True)
-    quantity = fields.Int(required=True, validate=validate.Range(min=1))
-    unit_price = fields.Decimal(required=True, places=2, validate=validate.Range(min=0))
-    received_quantity = fields.Int(load_default=0, validate=validate.Range(min=0))
-    line_total = fields.Float(dump_only=True)
+    model_config = ConfigDict(from_attributes=True)
 
+class PurchaseOrderItemCreate(PurchaseOrderItemBase):
+    pass
 
-class PurchaseOrderSchema(Schema):
-    """Purchase Order schema."""
-    po_id = fields.Int(dump_only=True)
-    po_number = fields.Str(required=True, validate=validate.Length(max=50))
-    supplier_id = fields.Int(required=True)
-    warehouse_id = fields.Int(required=True)
-    order_date = fields.Date(required=True)
-    expected_delivery_date = fields.Date(allow_none=True)
-    actual_delivery_date = fields.Date(allow_none=True, dump_only=True)
-    status = fields.Str(validate=validate.OneOf(['draft', 'pending', 'approved', 'received', 'cancelled']))
-    total_amount = fields.Decimal(places=2, dump_only=True, validate=validate.Range(min=0))
-    tax_amount = fields.Decimal(places=2, load_default=0, validate=validate.Range(min=0))
-    shipping_cost = fields.Decimal(places=2, load_default=0, validate=validate.Range(min=0))
-    notes = fields.Str()
-    created_by = fields.Int(dump_only=True)
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    items = fields.Nested(PurchaseOrderItemSchema, many=True)
+class PurchaseOrderItemResponse(PurchaseOrderItemBase):
+    po_item_id: int
+    po_id: int
+    line_total: Optional[Decimal] = None
 
+class PurchaseOrderBase(BaseModel):
+    """Base purchase order schema."""
+    po_number: str = Field(..., max_length=50)
+    supplier_id: int
+    warehouse_id: int
+    order_date: date
+    expected_delivery_date: Optional[date] = None
+    status: Literal['draft', 'pending', 'approved', 'received', 'cancelled'] = 'draft'
+    tax_amount: Decimal = Field(0, ge=0)
+    shipping_cost: Decimal = Field(0, ge=0)
+    notes: Optional[str] = None
 
-class PurchaseOrderCreateSchema(Schema):
+    model_config = ConfigDict(from_attributes=True)
+
+class PurchaseOrderCreate(PurchaseOrderBase):
     """Purchase Order creation schema."""
-    po_number = fields.Str(required=True, validate=validate.Length(max=50))
-    supplier_id = fields.Int(required=True)
-    warehouse_id = fields.Int(required=True)
-    order_date = fields.Date(required=True)
-    expected_delivery_date = fields.Date(allow_none=True)
-    tax_amount = fields.Decimal(places=2, load_default=0, validate=validate.Range(min=0))
-    shipping_cost = fields.Decimal(places=2, load_default=0, validate=validate.Range(min=0))
-    notes = fields.Str()
-    items = fields.Nested(PurchaseOrderItemSchema, many=True)
+    items: List[PurchaseOrderItemCreate]
 
-
-purchase_order_schema = PurchaseOrderSchema()
-purchase_orders_schema = PurchaseOrderSchema(many=True)
-purchase_order_create_schema = PurchaseOrderCreateSchema()
-po_item_schema = PurchaseOrderItemSchema()
+class PurchaseOrderResponse(PurchaseOrderBase):
+    """Purchase Order response schema."""
+    po_id: int
+    total_amount: Optional[Decimal] = None
+    actual_delivery_date: Optional[date] = None
+    created_by: Optional[int] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    items: Optional[List[PurchaseOrderItemResponse]] = None

@@ -1,21 +1,26 @@
 # Brand model
 
-from app.core.database import BaseModel
-from app.extensions import db
+from typing import Optional, List, TYPE_CHECKING
+from sqlalchemy import String, Boolean, Text, BigInteger, Integer
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.database import BaseModel
+
+if TYPE_CHECKING:
+    from app.modules.products.models import Product
 
 class Brand(BaseModel):
     """Brand model."""
     __tablename__ = 'brands'
 
-    brand_id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True, autoincrement=True)
-    brand_name = db.Column(db.String(100), unique=True, nullable=False, index=True)
-    manufacturer_name = db.Column(db.String(150))
-    description = db.Column(db.Text)
-    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    brand_id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
+    brand_name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
+    manufacturer_name: Mapped[Optional[str]] = mapped_column(String(150))
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     # Relationships
-    products = db.relationship('Product', backref='brand', lazy='dynamic')
+    products: Mapped[List["Product"]] = relationship('Product', back_populates='brand')
 
     def to_dict(self):
         """Serialize brand to dictionary."""

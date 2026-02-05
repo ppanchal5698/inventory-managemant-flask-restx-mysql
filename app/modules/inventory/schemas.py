@@ -1,69 +1,45 @@
-# Inventory schemas
+# Inventory schemas (Pydantic)
 
-from marshmallow import Schema, fields, validate
+from datetime import datetime
+from typing import Optional, Literal
+from pydantic import BaseModel, Field, ConfigDict
 
+class InventoryTransactionBase(BaseModel):
+    """Base inventory transaction schema."""
+    transaction_type: Literal['purchase', 'sale', 'adjustment', 'transfer', 'return', 'damage']
+    product_id: int
+    warehouse_id: int
+    quantity: int
+    reference_type: Optional[str] = Field(None, max_length=50)
+    reference_id: Optional[int] = None
+    notes: Optional[str] = None
 
-class InventoryTransactionSchema(Schema):
-    """Inventory Transaction schema."""
-    transaction_id = fields.Int(dump_only=True)
-    transaction_type = fields.Str(required=True, validate=validate.OneOf([
-        'purchase', 'sale', 'adjustment', 'transfer', 'return', 'damage'
-    ]))
-    product_id = fields.Int(required=True)
-    warehouse_id = fields.Int(required=True)
-    quantity = fields.Int(required=True)
-    reference_type = fields.Str(validate=validate.Length(max=50))
-    reference_id = fields.Int()
-    transaction_date = fields.DateTime(dump_only=True)
-    notes = fields.Str()
-    performed_by = fields.Int(dump_only=True)
+    model_config = ConfigDict(from_attributes=True)
 
+class InventoryTransactionCreate(InventoryTransactionBase):
+    pass
 
-class InventoryTransactionCreateSchema(Schema):
-    """Inventory Transaction creation schema."""
-    transaction_type = fields.Str(required=True, validate=validate.OneOf([
-        'purchase', 'sale', 'adjustment', 'transfer', 'return', 'damage'
-    ]))
-    product_id = fields.Int(required=True)
-    warehouse_id = fields.Int(required=True)
-    quantity = fields.Int(required=True)
-    reference_type = fields.Str(validate=validate.Length(max=50))
-    reference_id = fields.Int()
-    notes = fields.Str()
+class InventoryTransactionResponse(InventoryTransactionBase):
+    transaction_id: int
+    transaction_date: datetime
+    performed_by: Optional[int] = None
 
+class StockAdjustmentBase(BaseModel):
+    """Base stock adjustment schema."""
+    product_id: int
+    warehouse_id: int
+    new_quantity: int = Field(..., ge=0)
+    reason: Literal['physical_count', 'damage', 'theft', 'expired', 'correction', 'other']
+    notes: Optional[str] = None
 
-class StockAdjustmentSchema(Schema):
-    """Stock Adjustment schema."""
-    adjustment_id = fields.Int(dump_only=True)
-    product_id = fields.Int(required=True)
-    warehouse_id = fields.Int(required=True)
-    old_quantity = fields.Int(dump_only=True, validate=validate.Range(min=0))
-    new_quantity = fields.Int(required=True, validate=validate.Range(min=0))
-    quantity_difference = fields.Int(dump_only=True)
-    adjustment_quantity = fields.Int(dump_only=True)  # Alias for backward compatibility
-    reason = fields.Str(required=True, validate=validate.OneOf([
-        'physical_count', 'damage', 'theft', 'expired', 'correction', 'other'
-    ]))
-    notes = fields.Str()
-    adjusted_by = fields.Int(dump_only=True)
-    adjustment_date = fields.DateTime(dump_only=True)
+    model_config = ConfigDict(from_attributes=True)
 
+class StockAdjustmentCreate(StockAdjustmentBase):
+    pass
 
-class StockAdjustmentCreateSchema(Schema):
-    """Stock Adjustment creation schema."""
-    product_id = fields.Int(required=True)
-    warehouse_id = fields.Int(required=True)
-    new_quantity = fields.Int(required=True, validate=validate.Range(min=0))
-    reason = fields.Str(required=True, validate=validate.OneOf([
-        'physical_count', 'damage', 'theft', 'expired', 'correction', 'other'
-    ]))
-    notes = fields.Str()
-
-
-transaction_schema = InventoryTransactionSchema()
-transactions_schema = InventoryTransactionSchema(many=True)
-transaction_create_schema = InventoryTransactionCreateSchema()
-
-adjustment_schema = StockAdjustmentSchema()
-adjustments_schema = StockAdjustmentSchema(many=True)
-adjustment_create_schema = StockAdjustmentCreateSchema()
+class StockAdjustmentResponse(StockAdjustmentBase):
+    adjustment_id: int
+    old_quantity: int
+    quantity_difference: int
+    adjustment_date: datetime
+    adjusted_by: Optional[int] = None

@@ -1,10 +1,10 @@
 # create_app, register_extensions, register_blueprints
 # Modular Monolithic Architecture for Inventory Management System - REST API
 
-from flask import Flask
+from flask import Flask, jsonify
 
 from app.config import Config
-from app.extensions import db, migrate, cache, login_manager, api
+from app.extensions import db, migrate, cache, jwt, api
 
 
 def create_app(config_class=Config):
@@ -16,7 +16,9 @@ def create_app(config_class=Config):
     register_extensions(app)
 
     # Register API namespaces (modular monolith)
-    register_api_namespaces()
+    # We delay this to avoid circular imports and ensure extensions are ready
+    with app.app_context():
+        register_api_namespaces()
 
     # Register error handlers
     register_error_handlers(app)
@@ -32,11 +34,24 @@ def create_app(config_class=Config):
 
 def register_extensions(app):
     """Register Flask extensions."""
+    from app import extensions
+    from redis.asyncio import Redis
+
     db.init_app(app)
     migrate.init_app(app, db)
     cache.init_app(app)
-    login_manager.init_app(app)
+    jwt.init_app(app)
     api.init_app(app)
+
+    # Initialize Async Redis
+    if app.testing:
+        from fakeredis import aioredis
+        extensions.redis_client = aioredis.FakeRedis(decode_responses=False)
+    else:
+        extensions.redis_client = Redis.from_url(
+            app.config.get('REDIS_URL', 'redis://localhost:6379/0'),
+            decode_responses=False # Returns bytes for pickle support
+        )
 
 
 def register_api_namespaces():
@@ -68,15 +83,15 @@ def register_api_namespaces():
 
 def register_error_handlers(app):
     """Register error handlers for JSON responses."""
-    from flask import jsonify
 
     @app.errorhandler(404)
     def not_found_error(error):
         return jsonify({'success': False, 'message': 'Resource not found'}), 404
 
     @app.errorhandler(500)
-    def internal_error(error):
-        db.session.rollback()
+    async def internal_error(error):
+        # Async rollback
+        await db.session.rollback()
         return jsonify({'success': False, 'message': 'Internal server error'}), 500
 
     @app.errorhandler(401)
