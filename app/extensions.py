@@ -26,7 +26,6 @@ class AsyncSQLAlchemy(SQLAlchemy):
         super().__init__(model_class=model_class, **kwargs)
         self._async_engine = None
         self._async_session_factory = None
-        # We will overwrite self.session in init_app
 
     def init_app(self, app):
         """Initialize Async Engine and Session."""
@@ -45,6 +44,10 @@ class AsyncSQLAlchemy(SQLAlchemy):
         )
 
         # Overwrite self.session with Async Scoped Session
+        # In tests with pytest-asyncio, using current_task for scopefunc can be stable
+        # provided the event loop is consistent.
+
+        # Use asyncio.current_task for scopefunc
         self.session = async_scoped_session(
             self._async_session_factory,
             scopefunc=current_task

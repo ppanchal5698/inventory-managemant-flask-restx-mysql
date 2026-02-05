@@ -38,8 +38,14 @@ class PurchaseOrderService:
 
         subtotal = sum(i.quantity * i.unit_price for i in po.items)
         po.total_amount = subtotal + po.tax_amount + po.shipping_cost
-        
+
         await db.session.commit()
+
+        # Reload with items to ensure relationships are loaded for to_dict
+        stmt = select(PurchaseOrder).options(selectinload(PurchaseOrder.items)).filter_by(po_id=po.po_id)
+        result = await db.session.execute(stmt)
+        po = result.scalar_one()
+
         return po
 
     @staticmethod
@@ -66,6 +72,12 @@ class PurchaseOrderService:
                 )
 
         await db.session.commit()
+
+        # Reload with items
+        stmt = select(PurchaseOrder).options(selectinload(PurchaseOrder.items)).filter_by(po_id=po.po_id)
+        result = await db.session.execute(stmt)
+        po = result.scalar_one()
+
         return po
 
     @staticmethod

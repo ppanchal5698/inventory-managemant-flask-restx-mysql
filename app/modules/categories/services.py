@@ -43,14 +43,11 @@ class CategoryService:
         return await db.session.get(Category, category_id)
 
     @staticmethod
-    async def create(category_name: str, parent_category_id: int = None,
-               description: str = None) -> Category:
+    async def create(**kwargs) -> Category:
         """Create a new category."""
-        category = Category(
-            category_name=category_name,
-            parent_category_id=parent_category_id,
-            description=description
-        )
+        # Ensure we don't pass unexpected args if model doesn't support them,
+        # but Category model should support is_active.
+        category = Category(**kwargs)
         db.session.add(category)
         await db.session.commit()
         # Invalidate cache

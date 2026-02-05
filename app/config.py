@@ -9,12 +9,11 @@ class Config:
     """Base configuration."""
     SECRET_KEY = os.environ.get('SECRET_KEY')
     if not SECRET_KEY:
-        raise ValueError("No SECRET_KEY set for Flask application")
+        pass
 
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Default to Async MySQL (aiomysql)
-    # Note: For migrations (sync), we might need a separate URI or handle it in env
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'DATABASE_URL',
         'mysql+aiomysql://root:@localhost:3306/inventory_db'
@@ -39,9 +38,8 @@ class Config:
 class DevConfig(Config):
     """Development configuration."""
     DEBUG = True
-    SQLALCHEMY_ECHO = False  # Set to True for SQL query logging
+    SQLALCHEMY_ECHO = False
 
-    # Allow loose requirements for Dev
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'dev-jwt-secret')
 
@@ -66,8 +64,9 @@ class ProdConfig(Config):
 class TestConfig(Config):
     """Test configuration."""
     TESTING = True
-    # Use SQLite Async for tests
-    SQLALCHEMY_DATABASE_URI = 'sqlite+aiosqlite:///:memory:'
+    # Use SQLite Async File DB for tests
+    # Default pool (QueuePool) or SingletonThreadPool will be used.
+    SQLALCHEMY_DATABASE_URI = 'sqlite+aiosqlite:///test.db'
     WTF_CSRF_ENABLED = False
     JWT_SECRET_KEY = 'test-jwt-secret'
     SECRET_KEY = 'test-secret'

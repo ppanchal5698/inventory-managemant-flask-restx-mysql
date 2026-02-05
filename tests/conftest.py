@@ -2,6 +2,7 @@
 
 import pytest
 import asyncio
+import os
 from datetime import date
 from decimal import Decimal
 
@@ -16,16 +17,15 @@ from app.modules.products.models import Product
 from app.modules.warehouses.models import Warehouse
 from app.modules.stock.models import Stock
 
-@pytest.fixture(scope='session')
-def event_loop():
-    """Create an instance of the default event loop for each test case."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+# Let pytest-asyncio manage the event loop (function scope default)
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope='function')
 async def app():
     """Create application for testing."""
+    # Ensure clean state - unique db file per test worker if needed, but we use 'test.db'
+    if os.path.exists('test.db'):
+        os.remove('test.db')
+
     app = create_app(TestConfig)
 
     # Create tables
@@ -38,19 +38,26 @@ async def app():
         async with db.engine.begin() as conn:
             await conn.run_sync(db.metadata.drop_all)
 
+    # Cleanup
+    if os.path.exists('test.db'):
+        os.remove('test.db')
+
 @pytest.fixture(scope='function')
 async def db_session(app):
     """Create a fresh database session for each test."""
+
     with app.app_context():
-        # Clean up tables
         async with db.engine.begin() as conn:
              for table in reversed(db.metadata.sorted_tables):
                  await conn.execute(table.delete())
 
+    # We yield a session.
+    # Note: app.app_context() is contextvars based.
+    with app.app_context():
         async with db.session() as session:
             yield session
             await session.rollback()
-            await session.close()
+            # session closes on exit
 
 @pytest.fixture
 def client(app):

@@ -53,6 +53,11 @@ class SalesOrderService:
 
         await db.session.commit()
 
+        # Reload with items
+        stmt = select(SalesOrder).options(selectinload(SalesOrder.items)).filter_by(order_id=order.order_id)
+        result = await db.session.execute(stmt)
+        order = result.scalar_one()
+
         # Reserve stock?
         # Usually reserving stock happens on creation or explicit status change.
         # Let's assume we just record order for now.
@@ -84,6 +89,12 @@ class SalesOrderService:
                 )
 
         await db.session.commit()
+
+        # Reload with items
+        stmt = select(SalesOrder).options(selectinload(SalesOrder.items)).filter_by(order_id=order.order_id)
+        result = await db.session.execute(stmt)
+        order = result.scalar_one()
+
         return order
 
     @staticmethod

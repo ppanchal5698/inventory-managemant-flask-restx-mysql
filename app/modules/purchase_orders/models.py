@@ -25,7 +25,7 @@ class PurchaseOrder(BaseModel):
 
     # Relationships
     items = db.relationship('PurchaseOrderItem', backref='purchase_order',
-                            lazy='dynamic', cascade='all, delete-orphan')
+                            cascade='all, delete-orphan')
     creator = db.relationship('User', back_populates='purchase_orders')
     supplier = db.relationship('Supplier', back_populates='purchase_orders')
     warehouse = db.relationship('Warehouse', back_populates='purchase_orders')
