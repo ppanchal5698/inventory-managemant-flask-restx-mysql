@@ -1,9 +1,14 @@
-# Product services
+# Product services (Async)
 
-from typing import Optional, List
-from app.extensions import db, cache
+from typing import Optional, List, Tuple
+from sqlalchemy import select, or_, func, desc
+from app.extensions import db
 from app.modules.products.models import Product
-from app.core.cache import CacheKeyPrefixes
+# Import Stock model locally to avoid circular imports?
+# Or assume Stock is available.
+# We need Stock for stock calculation.
+from app.modules.stock.models import Stock
+from app.core.cache import CacheKeyPrefixes, invalidate_cache, cached_list, cached_item
 
 CACHE_PREFIX = CacheKeyPrefixes.PRODUCTS
 CACHE_TIMEOUT = 300  # 5 minutes
@@ -13,95 +18,126 @@ class ProductService:
     """Product management service."""
 
     @staticmethod
-    @cache.memoize(timeout=CACHE_TIMEOUT)
-    def get_all(include_inactive: bool = False) -> List[Product]:
+    @cached_list(CACHE_PREFIX, timeout=CACHE_TIMEOUT)
+    async def get_all(include_inactive: bool = False) -> List[Product]:
         """Get all products."""
-        query = Product.query
+        stmt = select(Product).order_by(Product.product_name)
         if not include_inactive:
-            query = query.filter_by(is_active=True)
-        return query.order_by(Product.product_name).all()
+            stmt = stmt.filter_by(is_active=True)
+        result = await db.session.execute(stmt)
+        return result.scalars().all()
 
     @staticmethod
-    @cache.memoize(timeout=CACHE_TIMEOUT)
-    def get_by_id(product_id: int) -> Optional[Product]:
+    @cached_item(CACHE_PREFIX, timeout=CACHE_TIMEOUT)
+    async def get_by_id(product_id: int) -> Optional[Product]:
         """Get product by ID."""
-        return Product.query.get(product_id)
+        return await db.session.get(Product, product_id)
 
     @staticmethod
-    @cache.memoize(timeout=CACHE_TIMEOUT)
-    def get_by_code(product_code: str) -> Optional[Product]:
+    @cached_item(CACHE_PREFIX, timeout=CACHE_TIMEOUT)
+    async def get_by_code(product_code: str) -> Optional[Product]:
         """Get product by code."""
-        return Product.query.filter_by(product_code=product_code).first()
+        stmt = select(Product).filter_by(product_code=product_code)
+        result = await db.session.execute(stmt)
+        return result.scalar_one_or_none()
 
     @staticmethod
-    @cache.memoize(timeout=CACHE_TIMEOUT)
-    def get_by_barcode(barcode: str) -> Optional[Product]:
+    @cached_item(CACHE_PREFIX, timeout=CACHE_TIMEOUT)
+    async def get_by_barcode(barcode: str) -> Optional[Product]:
         """Get product by barcode."""
-        return Product.query.filter_by(barcode=barcode).first()
+        stmt = select(Product).filter_by(barcode=barcode)
+        result = await db.session.execute(stmt)
+        return result.scalar_one_or_none()
 
     @staticmethod
-    def search(query: str) -> List[Product]:
-        """Search products by name or code (not cached due to dynamic query)."""
-        return Product.query.filter(
-            db.or_(
+    async def search(query: str) -> List[Product]:
+        """Search products by name or code."""
+        stmt = select(Product).filter(
+            or_(
                 Product.product_name.ilike(f'%{query}%'),
                 Product.product_code.ilike(f'%{query}%')
             ),
             Product.is_active == True
-        ).all()
+        )
+        result = await db.session.execute(stmt)
+        return result.scalars().all()
 
     @staticmethod
-    @cache.memoize(timeout=CACHE_TIMEOUT)
-    def get_by_category(category_id: int) -> List[Product]:
+    @cached_list(CACHE_PREFIX, timeout=CACHE_TIMEOUT)
+    async def get_by_category(category_id: int) -> List[Product]:
         """Get products by category."""
-        return Product.query.filter_by(category_id=category_id, is_active=True).all()
+        stmt = select(Product).filter_by(category_id=category_id, is_active=True)
+        result = await db.session.execute(stmt)
+        return result.scalars().all()
 
     @staticmethod
-    def get_low_stock_products() -> List[Product]:
-        """Get products with stock below reorder level (not cached - needs real-time data)."""
-        products = Product.query.filter_by(is_active=True).all()
-        return [p for p in products if p.total_stock <= p.reorder_level]
+    async def get_total_stock(product_id: int) -> int:
+        """Calculate total stock for a product."""
+        stmt = select(func.sum(Stock.quantity_on_hand)).filter_by(product_id=product_id)
+        result = await db.session.execute(stmt)
+        total = result.scalar()
+        return total or 0
 
     @staticmethod
-    def create(**kwargs) -> Product:
+    async def get_all_with_stock(include_inactive: bool = False) -> List[Tuple[Product, int]]:
+        """Get all products with their total stock."""
+        stmt = select(Product, func.coalesce(func.sum(Stock.quantity_on_hand), 0).label('total')) \
+            .outerjoin(Stock) \
+            .group_by(Product.product_id) \
+            .order_by(Product.product_name)
+
+        if not include_inactive:
+            stmt = stmt.filter(Product.is_active == True)
+
+        result = await db.session.execute(stmt)
+        return result.all()
+
+    @staticmethod
+    async def get_low_stock_products() -> List[Tuple[Product, int]]:
+        """Get products with low stock. Returns list of (Product, current_stock)."""
+        # Optimized query
+        stmt = select(Product, func.coalesce(func.sum(Stock.quantity_on_hand), 0).label('total')) \
+            .outerjoin(Stock) \
+            .filter(Product.is_active == True) \
+            .group_by(Product.product_id) \
+            .having(func.coalesce(func.sum(Stock.quantity_on_hand), 0) <= Product.reorder_level)
+
+        result = await db.session.execute(stmt)
+        return result.all() # returns rows of (Product, total)
+
+    @staticmethod
+    async def create(**kwargs) -> Product:
         """Create a new product."""
         product = Product(**kwargs)
         db.session.add(product)
-        db.session.commit()
+        await db.session.commit()
         # Invalidate cache
-        cache.delete_memoized(ProductService.get_all)
+        await invalidate_cache(CACHE_PREFIX)
         if product.category_id:
-            cache.delete_memoized(ProductService.get_by_category, product.category_id)
+            # We can't easily invalidate "get_by_category" without known args?
+            # invalidate_cache deletes "list" keys. get_by_category is "list".
+            pass
         return product
 
     @staticmethod
-    def update(product: Product, **kwargs) -> Product:
+    async def update(product: Product, **kwargs) -> Product:
         """Update product."""
-        old_category_id = product.category_id
+        # Invalidate specific cache keys
+        await invalidate_cache(CACHE_PREFIX, product.product_id)
+
         for key, value in kwargs.items():
             if hasattr(product, key) and key != 'product_id':
                 setattr(product, key, value)
-        db.session.commit()
-        # Invalidate cache
-        cache.delete_memoized(ProductService.get_all)
-        cache.delete_memoized(ProductService.get_by_id, product.product_id)
-        cache.delete_memoized(ProductService.get_by_code, product.product_code)
-        if product.barcode:
-            cache.delete_memoized(ProductService.get_by_barcode, product.barcode)
-        if old_category_id:
-            cache.delete_memoized(ProductService.get_by_category, old_category_id)
-        if product.category_id:
-            cache.delete_memoized(ProductService.get_by_category, product.category_id)
+        await db.session.commit()
+
+        # Invalidate list caches
+        await invalidate_cache(CACHE_PREFIX)
         return product
 
     @staticmethod
-    def delete(product: Product) -> None:
+    async def delete(product: Product) -> None:
         """Soft delete product."""
         product.is_active = False
-        db.session.commit()
-        # Invalidate cache
-        cache.delete_memoized(ProductService.get_all)
-        cache.delete_memoized(ProductService.get_by_id, product.product_id)
-        cache.delete_memoized(ProductService.get_by_code, product.product_code)
-        if product.category_id:
-            cache.delete_memoized(ProductService.get_by_category, product.category_id)
+        await db.session.commit()
+        await invalidate_cache(CACHE_PREFIX, product.product_id)
+        await invalidate_cache(CACHE_PREFIX)

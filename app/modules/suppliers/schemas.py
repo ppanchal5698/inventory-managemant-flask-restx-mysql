@@ -1,42 +1,32 @@
-# Supplier schemas
+# Supplier schemas (Pydantic)
 
-from marshmallow import Schema, fields, validate
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 
+class SupplierBase(BaseModel):
+    """Base supplier schema."""
+    supplier_name: str = Field(..., max_length=150)
+    contact_person: Optional[str] = Field(None, max_length=100)
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = Field(None, max_length=20)
+    address: Optional[str] = None
+    city: Optional[str] = Field(None, max_length=50)
+    state: Optional[str] = Field(None, max_length=50)
+    country: Optional[str] = Field('USA', max_length=50)
+    postal_code: Optional[str] = Field(None, max_length=20)
+    tax_id: Optional[str] = Field(None, max_length=50)
+    payment_terms: Optional[str] = Field(None, max_length=100)
+    is_active: bool = True
 
-class SupplierSchema(Schema):
-    """Supplier serialization schema."""
-    supplier_id = fields.Int(dump_only=True)
-    supplier_name = fields.Str(required=True, validate=validate.Length(max=150))
-    contact_person = fields.Str(validate=validate.Length(max=100))
-    email = fields.Email()
-    phone = fields.Str(validate=validate.Length(max=20))
-    address = fields.Str()
-    city = fields.Str(validate=validate.Length(max=50))
-    state = fields.Str(validate=validate.Length(max=50))
-    country = fields.Str(validate=validate.Length(max=50), load_default='USA')
-    postal_code = fields.Str(validate=validate.Length(max=20))
-    tax_id = fields.Str(validate=validate.Length(max=50))
-    payment_terms = fields.Str(validate=validate.Length(max=100))
-    is_active = fields.Bool()
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
+    model_config = ConfigDict(from_attributes=True)
 
-
-class SupplierCreateSchema(Schema):
+class SupplierCreate(SupplierBase):
     """Supplier creation schema."""
-    supplier_name = fields.Str(required=True, validate=validate.Length(max=150))
-    contact_person = fields.Str(validate=validate.Length(max=100))
-    email = fields.Email()
-    phone = fields.Str(validate=validate.Length(max=20))
-    address = fields.Str()
-    city = fields.Str(validate=validate.Length(max=50))
-    state = fields.Str(validate=validate.Length(max=50))
-    country = fields.Str(validate=validate.Length(max=50), load_default='USA')
-    postal_code = fields.Str(validate=validate.Length(max=20))
-    tax_id = fields.Str(validate=validate.Length(max=50))
-    payment_terms = fields.Str(validate=validate.Length(max=100))
+    pass
 
-
-supplier_schema = SupplierSchema()
-suppliers_schema = SupplierSchema(many=True)
-supplier_create_schema = SupplierCreateSchema()
+class SupplierResponse(SupplierBase):
+    """Supplier response schema."""
+    supplier_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None

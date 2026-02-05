@@ -1,33 +1,41 @@
 # Inventory Transaction and Stock Adjustment models
 
+from typing import Optional, TYPE_CHECKING
 from datetime import datetime
+from sqlalchemy import String, Integer, Text, Enum, ForeignKey, DateTime, BigInteger, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.schema import Computed
 
-from app.extensions import db
+from app.core.database import BaseModel
 
+if TYPE_CHECKING:
+    from app.modules.products.models import Product
+    from app.modules.warehouses.models import Warehouse
+    from app.modules.auth.models import User
 
-class InventoryTransaction(db.Model):
+class InventoryTransaction(BaseModel):
     """Inventory Transaction model - tracks all inventory movements."""
     __tablename__ = 'inventory_transactions'
 
-    transaction_id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True, autoincrement=True)
-    transaction_type = db.Column(db.Enum('purchase', 'sale', 'adjustment', 'transfer',
+    transaction_id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
+    transaction_type: Mapped[str] = mapped_column(Enum('purchase', 'sale', 'adjustment', 'transfer',
                                           'return', 'damage', name='transaction_type'),
                                   nullable=False, index=True)
-    product_id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), db.ForeignKey('products.product_id', ondelete='RESTRICT', onupdate='CASCADE'),
+    product_id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), ForeignKey('products.product_id', ondelete='RESTRICT', onupdate='CASCADE'),
                            nullable=False, index=True)
-    warehouse_id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), db.ForeignKey('warehouses.warehouse_id', ondelete='RESTRICT', onupdate='CASCADE'),
+    warehouse_id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), ForeignKey('warehouses.warehouse_id', ondelete='RESTRICT', onupdate='CASCADE'),
                               nullable=False, index=True)
-    quantity = db.Column(db.Integer, nullable=False)
-    reference_type = db.Column(db.String(50))  # 'purchase_order', 'sales_order', etc.
-    reference_id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"))  # ID of the related document
-    transaction_date = db.Column(db.DateTime, nullable=False, server_default=db.func.current_timestamp(), index=True)
-    notes = db.Column(db.Text)
-    performed_by = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), db.ForeignKey('users.user_id', ondelete='SET NULL', onupdate='CASCADE'))
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    reference_type: Mapped[Optional[str]] = mapped_column(String(50))  # 'purchase_order', 'sales_order', etc.
+    reference_id: Mapped[Optional[int]] = mapped_column(BigInteger().with_variant(Integer, "sqlite"))  # ID of the related document
+    transaction_date: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), index=True)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
+    performed_by: Mapped[Optional[int]] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), ForeignKey('users.user_id', ondelete='SET NULL', onupdate='CASCADE'))
 
     # Relationships
-    product = db.relationship('Product', backref='transactions')
-    warehouse = db.relationship('Warehouse', backref='transactions')
-    user = db.relationship('User', backref='inventory_transactions')
+    product: Mapped["Product"] = relationship('Product', backref='transactions')
+    warehouse: Mapped["Warehouse"] = relationship('Warehouse', back_populates='transactions')
+    user: Mapped[Optional["User"]] = relationship('User', backref='inventory_transactions')
 
     def to_dict(self):
         """Serialize transaction to dictionary."""
@@ -48,26 +56,28 @@ class InventoryTransaction(db.Model):
         return f'<InventoryTransaction {self.transaction_id} {self.transaction_type}>'
 
 
-class StockAdjustment(db.Model):
+class StockAdjustment(BaseModel):
     """Stock Adjustment model - tracks stock corrections."""
     __tablename__ = 'stock_adjustments'
 
-    adjustment_id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True, autoincrement=True)
-    product_id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), db.ForeignKey('products.product_id', ondelete='RESTRICT', onupdate='CASCADE'), nullable=False)
-    warehouse_id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), db.ForeignKey('warehouses.warehouse_id', ondelete='RESTRICT', onupdate='CASCADE'), nullable=False)
-    old_quantity = db.Column(db.Integer, nullable=False)
-    new_quantity = db.Column(db.Integer, nullable=False)
-    quantity_difference = db.Column(db.Integer, db.Computed('(new_quantity - old_quantity)'))
-    reason = db.Column(db.Enum('physical_count', 'damage', 'theft', 'expired',
+    adjustment_id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
+    product_id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), ForeignKey('products.product_id', ondelete='RESTRICT', onupdate='CASCADE'), nullable=False)
+    warehouse_id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), ForeignKey('warehouses.warehouse_id', ondelete='RESTRICT', onupdate='CASCADE'), nullable=False)
+    old_quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    new_quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    # Computed columns can be tricky in some DBs, but standard SA syntax usually works.
+    # Note: SQLite supports generated columns in newer versions.
+    quantity_difference: Mapped[int] = mapped_column(Integer, Computed('(new_quantity - old_quantity)'))
+    reason: Mapped[str] = mapped_column(Enum('physical_count', 'damage', 'theft', 'expired',
                                 'correction', 'other', name='adjustment_reason'), nullable=False)
-    notes = db.Column(db.Text)
-    adjusted_by = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), db.ForeignKey('users.user_id', ondelete='SET NULL', onupdate='CASCADE'))
-    adjustment_date = db.Column(db.DateTime, nullable=False, server_default=db.func.current_timestamp(), index=True)
+    notes: Mapped[Optional[str]] = mapped_column(Text)
+    adjusted_by: Mapped[Optional[int]] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), ForeignKey('users.user_id', ondelete='SET NULL', onupdate='CASCADE'))
+    adjustment_date: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now(), index=True)
 
     # Relationships
-    product = db.relationship('Product', backref='adjustments')
-    warehouse = db.relationship('Warehouse', backref='adjustments')
-    user = db.relationship('User', backref='stock_adjustments')
+    product: Mapped["Product"] = relationship('Product', backref='adjustments')
+    warehouse: Mapped["Warehouse"] = relationship('Warehouse', back_populates='adjustments')
+    user: Mapped[Optional["User"]] = relationship('User', backref='stock_adjustments')
 
     def to_dict(self):
         """Serialize adjustment to dictionary."""
@@ -78,7 +88,7 @@ class StockAdjustment(db.Model):
             'old_quantity': self.old_quantity,
             'new_quantity': self.new_quantity,
             'quantity_difference': self.quantity_difference,
-            'adjustment_quantity': self.quantity_difference,  # Alias for backward compatibility
+            'adjustment_quantity': self.quantity_difference,
             'reason': self.reason,
             'notes': self.notes,
             'adjusted_by': self.adjusted_by,

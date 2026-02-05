@@ -1,57 +1,54 @@
-# Sales Order schemas
+# Sales Order schemas (Pydantic)
 
-from marshmallow import Schema, fields, validate
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Optional, List, Literal, Dict, Any
+from pydantic import BaseModel, Field, ConfigDict
 
+class SalesOrderItemBase(BaseModel):
+    """Base sales order item schema."""
+    product_id: int
+    quantity: int = Field(..., gt=0)
+    unit_price: Decimal = Field(..., ge=0)
+    discount: Decimal = Field(0, ge=0)
 
-class SalesOrderItemSchema(Schema):
-    """Sales Order Item schema."""
-    order_item_id = fields.Int(dump_only=True)
-    order_id = fields.Int(dump_only=True)
-    product_id = fields.Int(required=True)
-    quantity = fields.Int(required=True, validate=validate.Range(min=1))
-    unit_price = fields.Decimal(required=True, places=2, validate=validate.Range(min=0))
-    discount = fields.Decimal(load_default=0, places=2, validate=validate.Range(min=0))
-    line_total = fields.Float(dump_only=True)
+    model_config = ConfigDict(from_attributes=True)
 
+class SalesOrderItemCreate(SalesOrderItemBase):
+    pass
 
-class SalesOrderSchema(Schema):
-    """Sales Order schema."""
-    order_id = fields.Int(dump_only=True)
-    order_number = fields.Str(required=True, validate=validate.Length(max=50))
-    customer_id = fields.Int(required=True)
-    warehouse_id = fields.Int(required=True)
-    order_date = fields.Date(required=True)
-    expected_delivery_date = fields.Date(allow_none=True)
-    actual_delivery_date = fields.Date(allow_none=True, dump_only=True)
-    status = fields.Str(validate=validate.OneOf(['pending', 'processing', 'shipped', 'delivered', 'cancelled']))
-    total_amount = fields.Decimal(places=2, dump_only=True)
-    tax_amount = fields.Decimal(places=2, load_default=0)
-    shipping_cost = fields.Decimal(places=2, load_default=0)
-    discount_amount = fields.Decimal(places=2, load_default=0, validate=validate.Range(min=0))
-    payment_status = fields.Str(validate=validate.OneOf(['unpaid', 'partial', 'paid']))
-    notes = fields.Str()
-    created_by = fields.Int(dump_only=True)
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    items = fields.Nested(SalesOrderItemSchema, many=True)
-    customer = fields.Dict(dump_only=True)
+class SalesOrderItemResponse(SalesOrderItemBase):
+    order_item_id: int
+    order_id: int
+    line_total: Optional[Decimal] = None
 
+class SalesOrderBase(BaseModel):
+    """Base sales order schema."""
+    order_number: str = Field(..., max_length=50)
+    customer_id: int
+    warehouse_id: int
+    order_date: date
+    expected_delivery_date: Optional[date] = None
+    status: Literal['pending', 'processing', 'shipped', 'delivered', 'cancelled'] = 'pending'
+    tax_amount: Decimal = Field(0, ge=0)
+    shipping_cost: Decimal = Field(0, ge=0)
+    discount_amount: Decimal = Field(0, ge=0)
+    payment_status: Literal['unpaid', 'partial', 'paid'] = 'unpaid'
+    notes: Optional[str] = None
 
-class SalesOrderCreateSchema(Schema):
+    model_config = ConfigDict(from_attributes=True)
+
+class SalesOrderCreate(SalesOrderBase):
     """Sales Order creation schema."""
-    order_number = fields.Str(required=True, validate=validate.Length(max=50))
-    customer_id = fields.Int(required=True)
-    warehouse_id = fields.Int(required=True)
-    order_date = fields.Date(required=True)
-    expected_delivery_date = fields.Date(allow_none=True)
-    tax_amount = fields.Decimal(places=2, load_default=0)
-    shipping_cost = fields.Decimal(places=2, load_default=0)
-    discount_amount = fields.Decimal(places=2, load_default=0, validate=validate.Range(min=0))
-    notes = fields.Str()
-    items = fields.Nested(SalesOrderItemSchema, many=True)
+    items: List[SalesOrderItemCreate]
 
-
-sales_order_schema = SalesOrderSchema()
-sales_orders_schema = SalesOrderSchema(many=True)
-sales_order_create_schema = SalesOrderCreateSchema()
-so_item_schema = SalesOrderItemSchema()
+class SalesOrderResponse(SalesOrderBase):
+    """Sales Order response schema."""
+    order_id: int
+    total_amount: Optional[Decimal] = None
+    actual_delivery_date: Optional[date] = None
+    created_by: Optional[int] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    items: Optional[List[SalesOrderItemResponse]] = None
+    customer: Optional[Dict[str, Any]] = None # Or use CustomerResponse if available

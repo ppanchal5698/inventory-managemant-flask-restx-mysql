@@ -1,38 +1,35 @@
-# Stock schemas
+# Stock schemas (Pydantic)
 
-from marshmallow import Schema, fields, validate
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel, Field, ConfigDict
 
+class StockBase(BaseModel):
+    """Base stock schema."""
+    product_id: int
+    warehouse_id: int
+    quantity_on_hand: int = Field(..., ge=0)
+    quantity_reserved: int = Field(0, ge=0)
 
-class StockSchema(Schema):
-    """Stock serialization schema."""
-    stock_id = fields.Int(dump_only=True)
-    product_id = fields.Int(required=True)
-    warehouse_id = fields.Int(required=True)
-    quantity_on_hand = fields.Int(required=True)
-    quantity_reserved = fields.Int(load_default=0)
-    quantity_available = fields.Int(dump_only=True)
-    last_stock_check = fields.DateTime()
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    product = fields.Nested('ProductSchema', dump_only=True)
-    warehouse = fields.Nested('WarehouseSchema', dump_only=True)
+    model_config = ConfigDict(from_attributes=True)
 
-
-class StockCreateSchema(Schema):
+class StockCreate(StockBase):
     """Stock creation schema."""
-    product_id = fields.Int(required=True)
-    warehouse_id = fields.Int(required=True)
-    quantity_on_hand = fields.Int(required=True, validate=validate.Range(min=0))
-    quantity_reserved = fields.Int(load_default=0, validate=validate.Range(min=0))
+    pass
 
-
-class StockUpdateSchema(Schema):
+class StockUpdate(BaseModel):
     """Stock update schema."""
-    quantity_on_hand = fields.Int(validate=validate.Range(min=0))
-    quantity_reserved = fields.Int(validate=validate.Range(min=0))
+    quantity_on_hand: Optional[int] = Field(None, ge=0)
+    quantity_reserved: Optional[int] = Field(None, ge=0)
 
+class StockResponse(StockBase):
+    """Stock response schema."""
+    stock_id: int
+    quantity_available: int
+    last_stock_check: Optional[datetime] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
-stock_schema = StockSchema()
-stocks_schema = StockSchema(many=True)
-stock_create_schema = StockCreateSchema()
-stock_update_schema = StockUpdateSchema()
+class StockAdjust(BaseModel):
+    """Stock adjustment schema."""
+    adjustment: int

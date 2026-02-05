@@ -1,42 +1,33 @@
-# Customer schemas
+# Customer schemas (Pydantic)
 
-from marshmallow import Schema, fields, validate
+from datetime import datetime
+from decimal import Decimal
+from typing import Optional
+from pydantic import BaseModel, Field, EmailStr, ConfigDict
 
+class CustomerBase(BaseModel):
+    """Base customer schema."""
+    customer_name: str = Field(..., max_length=150)
+    contact_person: Optional[str] = Field(None, max_length=100)
+    email: Optional[EmailStr] = None
+    phone: Optional[str] = Field(None, max_length=20)
+    address: Optional[str] = None
+    city: Optional[str] = Field(None, max_length=50)
+    state: Optional[str] = Field(None, max_length=50)
+    country: Optional[str] = Field('USA', max_length=50)
+    postal_code: Optional[str] = Field(None, max_length=20)
+    tax_id: Optional[str] = Field(None, max_length=50)
+    credit_limit: Optional[Decimal] = Field(None, ge=0)
+    is_active: bool = True
 
-class CustomerSchema(Schema):
-    """Customer serialization schema."""
-    customer_id = fields.Int(dump_only=True)
-    customer_name = fields.Str(required=True, validate=validate.Length(max=150))
-    contact_person = fields.Str(validate=validate.Length(max=100))
-    email = fields.Email()
-    phone = fields.Str(validate=validate.Length(max=20))
-    address = fields.Str()
-    city = fields.Str(validate=validate.Length(max=50))
-    state = fields.Str(validate=validate.Length(max=50))
-    country = fields.Str(validate=validate.Length(max=50), load_default='USA')
-    postal_code = fields.Str(validate=validate.Length(max=20))
-    tax_id = fields.Str(validate=validate.Length(max=50))
-    credit_limit = fields.Decimal(places=2, allow_none=True, validate=validate.Range(min=0))
-    is_active = fields.Bool()
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
+    model_config = ConfigDict(from_attributes=True)
 
-
-class CustomerCreateSchema(Schema):
+class CustomerCreate(CustomerBase):
     """Customer creation schema."""
-    customer_name = fields.Str(required=True, validate=validate.Length(max=150))
-    contact_person = fields.Str(validate=validate.Length(max=100))
-    email = fields.Email()
-    phone = fields.Str(validate=validate.Length(max=20))
-    address = fields.Str()
-    city = fields.Str(validate=validate.Length(max=50))
-    state = fields.Str(validate=validate.Length(max=50))
-    country = fields.Str(validate=validate.Length(max=50), load_default='USA')
-    postal_code = fields.Str(validate=validate.Length(max=20))
-    tax_id = fields.Str(validate=validate.Length(max=50))
-    credit_limit = fields.Decimal(places=2, allow_none=True, validate=validate.Range(min=0))
+    pass
 
-
-customer_schema = CustomerSchema()
-customers_schema = CustomerSchema(many=True)
-customer_create_schema = CustomerCreateSchema()
+class CustomerResponse(CustomerBase):
+    """Customer response schema."""
+    customer_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None

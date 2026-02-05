@@ -1,47 +1,43 @@
-# Auth schemas
+# Auth schemas (Pydantic)
 
-from marshmallow import Schema, fields, validate, post_load
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 
+class UserBase(BaseModel):
+    """Base user schema."""
+    username: str = Field(..., min_length=3, max_length=50)
+    first_name: str = Field(..., max_length=100)
+    last_name: str = Field(..., max_length=100)
+    email: EmailStr
+    phone: Optional[str] = Field(None, max_length=20)
+    role: Optional[str] = Field('staff', pattern='^(admin|manager|staff|viewer)$')
 
-class UserSchema(Schema):
-    """User serialization schema."""
-    user_id = fields.Int(dump_only=True)
-    username = fields.Str(required=True, validate=validate.Length(min=3, max=50))
-    first_name = fields.Str(required=True, validate=validate.Length(max=100))
-    last_name = fields.Str(required=True, validate=validate.Length(max=100))
-    email = fields.Email(required=True)
-    phone = fields.Str(validate=validate.Length(max=20))
-    role = fields.Str(validate=validate.OneOf(['admin', 'manager', 'staff', 'viewer']))
-    is_active = fields.Bool(dump_only=True)
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
+    model_config = ConfigDict(from_attributes=True)
 
-
-class UserCreateSchema(Schema):
+class UserCreate(UserBase):
     """User creation schema."""
-    username = fields.Str(required=True, validate=validate.Length(min=3, max=50))
-    password = fields.Str(required=True, validate=validate.Length(min=8), load_only=True)
-    first_name = fields.Str(required=True, validate=validate.Length(max=100))
-    last_name = fields.Str(required=True, validate=validate.Length(max=100))
-    email = fields.Email(required=True)
-    phone = fields.Str(validate=validate.Length(max=20))
-    role = fields.Str(validate=validate.OneOf(['admin', 'manager', 'staff', 'viewer']), load_default='staff')
+    password: str = Field(..., min_length=8)
 
+class UserResponse(UserBase):
+    """User response schema."""
+    user_id: int
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
-class LoginSchema(Schema):
-    """Login schema."""
-    username = fields.Str(required=True)
-    password = fields.Str(required=True, load_only=True)
+class LoginRequest(BaseModel):
+    """Login request schema."""
+    username: str
+    password: str
 
+class LoginResponse(BaseModel):
+    """Login response schema."""
+    access_token: str
+    refresh_token: str
+    user: UserResponse
 
-class PasswordChangeSchema(Schema):
+class PasswordChange(BaseModel):
     """Password change schema."""
-    current_password = fields.Str(required=True, load_only=True)
-    new_password = fields.Str(required=True, validate=validate.Length(min=8), load_only=True)
-
-
-user_schema = UserSchema()
-users_schema = UserSchema(many=True)
-user_create_schema = UserCreateSchema()
-login_schema = LoginSchema()
-password_change_schema = PasswordChangeSchema()
+    current_password: str
+    new_password: str = Field(..., min_length=8)

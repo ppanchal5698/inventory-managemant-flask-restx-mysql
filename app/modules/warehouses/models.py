@@ -1,30 +1,42 @@
 # Warehouse model
 
-from app.core.database import BaseModel
-from app.extensions import db
+from typing import Optional, List, TYPE_CHECKING
+from sqlalchemy import String, Boolean, Text, Integer, BigInteger
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.database import BaseModel
+
+if TYPE_CHECKING:
+    from app.modules.stock.models import Stock
+    from app.modules.purchase_orders.models import PurchaseOrder
+    from app.modules.sales_orders.models import SalesOrder
+    from app.modules.inventory.models import InventoryTransaction, StockAdjustment
 
 class Warehouse(BaseModel):
     """Warehouse model."""
     __tablename__ = 'warehouses'
 
-    warehouse_id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True, autoincrement=True)
-    warehouse_name = db.Column(db.String(100), nullable=False, index=True)
-    location = db.Column(db.String(200))
-    address = db.Column(db.Text)
-    city = db.Column(db.String(50))
-    state = db.Column(db.String(50))
-    country = db.Column(db.String(50), default='USA')
-    postal_code = db.Column(db.String(20))
-    manager_name = db.Column(db.String(100))
-    phone = db.Column(db.String(20))
-    capacity = db.Column(db.Integer)
-    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    warehouse_id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
+    warehouse_name: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
+    location: Mapped[Optional[str]] = mapped_column(String(200))
+    address: Mapped[Optional[str]] = mapped_column(Text)
+    city: Mapped[Optional[str]] = mapped_column(String(50))
+    state: Mapped[Optional[str]] = mapped_column(String(50))
+    country: Mapped[Optional[str]] = mapped_column(String(50), default='USA')
+    postal_code: Mapped[Optional[str]] = mapped_column(String(20))
+    manager_name: Mapped[Optional[str]] = mapped_column(String(100))
+    phone: Mapped[Optional[str]] = mapped_column(String(20))
+    capacity: Mapped[Optional[int]] = mapped_column(Integer)
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     # Relationships
-    stock_entries = db.relationship('Stock', backref='warehouse', lazy='dynamic')
-    purchase_orders = db.relationship('PurchaseOrder', backref='warehouse', lazy='dynamic')
-    sales_orders = db.relationship('SalesOrder', backref='warehouse', lazy='dynamic')
+    stock_entries: Mapped[List["Stock"]] = relationship('Stock', back_populates='warehouse')
+    purchase_orders: Mapped[List["PurchaseOrder"]] = relationship('PurchaseOrder', back_populates='warehouse')
+    sales_orders: Mapped[List["SalesOrder"]] = relationship('SalesOrder', back_populates='warehouse')
+
+    # Inventory Module Relationships
+    transactions: Mapped[List["InventoryTransaction"]] = relationship('InventoryTransaction', back_populates='warehouse')
+    adjustments: Mapped[List["StockAdjustment"]] = relationship('StockAdjustment', back_populates='warehouse')
 
     def to_dict(self):
         """Serialize warehouse to dictionary."""

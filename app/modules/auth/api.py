@@ -2,14 +2,13 @@
 
 from flask import request
 from flask_restx import Namespace, Resource, fields
-from flask_login import login_user, logout_user, login_required, current_user
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, get_jwt_identity, get_jwt
 
 from app.modules.auth.services import AuthService
 from app.modules.auth.schemas import (
-    user_schema, users_schema, user_create_schema, 
-    login_schema, password_change_schema
+    UserCreate, LoginRequest, PasswordChange
 )
-from app.core.utils import api_response, require_role
+from app.core.utils import api_response, require_role, async_route
 
 auth_ns = Namespace('auth', description='Authentication operations')
 
@@ -51,92 +50,111 @@ password_change_model = auth_ns.model('PasswordChange', {
 class Login(Resource):
     @auth_ns.expect(login_model)
     @auth_ns.doc('user_login')
-    def post(self):
+    @async_route
+    async def post(self):
         """User login endpoint."""
-        data = request.get_json()
-        errors = login_schema.validate(data)
-        if errors:
-            return api_response(message=errors, status_code=400)
+        try:
+            data = LoginRequest.model_validate(request.get_json())
+        except Exception as e:
+            return api_response(message=str(e), status_code=400)
         
-        user = AuthService.authenticate(data['username'], data['password'])
+        user = await AuthService.authenticate(data.username, data.password)
         if user:
-            login_user(user)
-            return api_response(data=user.to_dict(), message='Login successful')
+            # Create JWT tokens
+            access_token = create_access_token(identity=str(user.user_id), additional_claims={'role': user.role})
+            refresh_token = create_refresh_token(identity=str(user.user_id))
+
+            return api_response(data={
+                'user': user.to_dict(),
+                'access_token': access_token,
+                'refresh_token': refresh_token
+            }, message='Login successful')
+
         return api_response(message='Invalid credentials', status_code=401)
 
 
 @auth_ns.route('/logout')
 class Logout(Resource):
     @auth_ns.doc('user_logout')
-    @login_required
-    def post(self):
+    @jwt_required()
+    @async_route
+    async def post(self):
         """User logout endpoint."""
-        logout_user()
+        # Client should discard token.
+        # Ideally, blacklist token in Redis here.
         return api_response(message='Logged out successfully')
 
 
 @auth_ns.route('/me')
 class CurrentUser(Resource):
     @auth_ns.doc('get_current_user')
-    @login_required
-    def get(self):
+    @jwt_required()
+    @async_route
+    async def get(self):
         """Get current authenticated user."""
-        return api_response(data=current_user.to_dict())
+        user_id = get_jwt_identity()
+        user = await AuthService.get_user_by_id(int(user_id))
+        if not user:
+             return api_response(message='User not found', status_code=404)
+        return api_response(data=user.to_dict())
 
 
 @auth_ns.route('/users')
 class UserList(Resource):
     @auth_ns.doc('list_users')
-    @login_required
     @require_role('admin', 'manager')
-    def get(self):
+    @async_route
+    async def get(self):
         """Get all users."""
-        users = AuthService.get_all_users()
+        users = await AuthService.get_all_users()
         return api_response(data=[u.to_dict() for u in users])
 
     @auth_ns.expect(user_create_model)
     @auth_ns.doc('create_user')
-    @login_required
     @require_role('admin')
-    def post(self):
+    @async_route
+    async def post(self):
         """Create a new user."""
-        data = request.get_json()
-        errors = user_create_schema.validate(data)
-        if errors:
-            return api_response(message=errors, status_code=400)
+        try:
+            data = UserCreate.model_validate(request.get_json())
+        except Exception as e:
+            return api_response(message=str(e), status_code=400)
         
-        if AuthService.get_user_by_username(data['username']):
+        if await AuthService.get_user_by_username(data.username):
             return api_response(message='Username already exists', status_code=400)
-        if AuthService.get_user_by_email(data['email']):
+        if await AuthService.get_user_by_email(data.email):
             return api_response(message='Email already exists', status_code=400)
         
-        user = AuthService.create_user(**data)
+        # Pydantic model to dict
+        user_data = data.model_dump()
+
+        user = await AuthService.create_user(**user_data)
         return api_response(data=user.to_dict(), message='User created', status_code=201)
 
 
 @auth_ns.route('/users/<int:user_id>')
 class UserDetail(Resource):
     @auth_ns.doc('get_user')
-    @login_required
     @require_role('admin', 'manager')
-    def get(self, user_id):
+    @async_route
+    async def get(self, user_id):
         """Get user by ID."""
-        user = AuthService.get_user_by_id(user_id)
+        user = await AuthService.get_user_by_id(user_id)
         if not user:
             return api_response(message='User not found', status_code=404)
         return api_response(data=user.to_dict())
 
     @auth_ns.doc('update_user')
-    @login_required
     @require_role('admin')
-    def put(self, user_id):
+    @async_route
+    async def put(self, user_id):
         """Update user."""
-        user = AuthService.get_user_by_id(user_id)
+        user = await AuthService.get_user_by_id(user_id)
         if not user:
             return api_response(message='User not found', status_code=404)
         
         data = request.get_json()
-        user = AuthService.update_user(user, **data)
+        user = await AuthService.update_user(user, **data)
         return api_response(data=user.to_dict(), message='User updated')
 
 
@@ -144,16 +162,20 @@ class UserDetail(Resource):
 class ChangePassword(Resource):
     @auth_ns.expect(password_change_model)
     @auth_ns.doc('change_password')
-    @login_required
-    def post(self):
+    @jwt_required()
+    @async_route
+    async def post(self):
         """Change current user's password."""
-        data = request.get_json()
-        errors = password_change_schema.validate(data)
-        if errors:
-            return api_response(message=errors, status_code=400)
+        try:
+            data = PasswordChange.model_validate(request.get_json())
+        except Exception as e:
+            return api_response(message=str(e), status_code=400)
+
+        user_id = get_jwt_identity()
+        user = await AuthService.get_user_by_id(int(user_id))
         
-        if not current_user.check_password(data['current_password']):
+        if not user.check_password(data.current_password):
             return api_response(message='Current password is incorrect', status_code=400)
         
-        AuthService.change_password(current_user, data['new_password'])
+        await AuthService.change_password(user, data.new_password)
         return api_response(message='Password changed successfully')

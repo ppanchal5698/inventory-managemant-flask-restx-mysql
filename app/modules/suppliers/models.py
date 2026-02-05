@@ -1,29 +1,39 @@
 # Supplier model
 
-from app.core.database import BaseModel
-from app.extensions import db
+from typing import Optional, List, TYPE_CHECKING
+from sqlalchemy import String, Boolean, Text, BigInteger, Integer
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.core.database import BaseModel
+
+if TYPE_CHECKING:
+    from app.modules.purchase_orders.models import PurchaseOrder
 
 class Supplier(BaseModel):
     """Supplier model."""
     __tablename__ = 'suppliers'
 
-    supplier_id = db.Column(db.BigInteger().with_variant(db.Integer, "sqlite"), primary_key=True, autoincrement=True)
-    supplier_name = db.Column(db.String(150), nullable=False, index=True)
-    contact_person = db.Column(db.String(100))
-    email = db.Column(db.String(100))
-    phone = db.Column(db.String(20))
-    address = db.Column(db.Text)
-    city = db.Column(db.String(50))
-    state = db.Column(db.String(50))
-    country = db.Column(db.String(50), default='USA')
-    postal_code = db.Column(db.String(20))
-    tax_id = db.Column(db.String(50))
-    payment_terms = db.Column(db.String(100))
-    is_active = db.Column(db.Boolean, nullable=False, default=True)
+    supplier_id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
+    supplier_name: Mapped[str] = mapped_column(String(150), nullable=False, index=True)
+    contact_person: Mapped[Optional[str]] = mapped_column(String(100))
+    email: Mapped[Optional[str]] = mapped_column(String(100))
+    phone: Mapped[Optional[str]] = mapped_column(String(20))
+    address: Mapped[Optional[str]] = mapped_column(Text)
+    city: Mapped[Optional[str]] = mapped_column(String(50))
+    state: Mapped[Optional[str]] = mapped_column(String(50))
+    country: Mapped[Optional[str]] = mapped_column(String(50), default='USA')
+    postal_code: Mapped[Optional[str]] = mapped_column(String(20))
+    tax_id: Mapped[Optional[str]] = mapped_column(String(50))
+    payment_terms: Mapped[Optional[str]] = mapped_column(String(100))
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     # Relationships
-    purchase_orders = db.relationship('PurchaseOrder', backref='supplier', lazy='dynamic')
+    # Note: PurchaseOrder model needs 'supplier' relationship defined with back_populates='purchase_orders' if we change backref here.
+    # For now, I will use backref='supplier' in relationship() syntax to keep compatibility with existing PurchaseOrder model if it doesn't define 'supplier'.
+    # Actually, legacy backref works in 2.0.
+    # But better to be explicit.
+    # I will patch PurchaseOrder model to add 'supplier' relationship.
+    purchase_orders: Mapped[List["PurchaseOrder"]] = relationship('PurchaseOrder', back_populates='supplier')
 
     def to_dict(self):
         """Serialize supplier to dictionary."""

@@ -1,27 +1,28 @@
-# Category schemas
+# Category schemas (Pydantic)
 
-from marshmallow import Schema, fields, validate
+from datetime import datetime
+from typing import Optional, List
+from pydantic import BaseModel, Field, ConfigDict
 
+class CategoryBase(BaseModel):
+    """Base category schema."""
+    category_name: str = Field(..., max_length=100)
+    parent_category_id: Optional[int] = None
+    description: Optional[str] = None
+    is_active: bool = True
 
-class CategorySchema(Schema):
-    """Category serialization schema."""
-    category_id = fields.Int(dump_only=True)
-    category_name = fields.Str(required=True, validate=validate.Length(max=100))
-    parent_category_id = fields.Int(allow_none=True)
-    description = fields.Str()
-    is_active = fields.Bool()
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
-    subcategories = fields.Nested('self', many=True, dump_only=True)
+    model_config = ConfigDict(from_attributes=True)
 
-
-class CategoryCreateSchema(Schema):
+class CategoryCreate(CategoryBase):
     """Category creation schema."""
-    category_name = fields.Str(required=True, validate=validate.Length(max=100))
-    parent_category_id = fields.Int(allow_none=True)
-    description = fields.Str()
+    pass
 
+class CategoryResponse(CategoryBase):
+    """Category response schema."""
+    category_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    subcategories: Optional[List['CategoryResponse']] = None
 
-category_schema = CategorySchema()
-categories_schema = CategorySchema(many=True)
-category_create_schema = CategoryCreateSchema()
+# Resolve forward reference
+CategoryResponse.model_rebuild()

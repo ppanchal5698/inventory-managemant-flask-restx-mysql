@@ -1,33 +1,21 @@
-# WSGI / before_request hooks
+# Application Middleware
 
-from flask import request, g
-import time
-
+from werkzeug.wrappers import Request, Response, ResponseStream
 
 def register_middleware(app):
-    """Register middleware hooks."""
-
-    @app.before_request
-    def before_request():
-        """Execute before each request."""
-        g.start_time = time.time()
+    """Register middleware for the Flask application."""
 
     @app.after_request
-    def after_request(response):
-        """Execute after each request."""
-        # Add request timing header
-        if hasattr(g, 'start_time'):
-            elapsed = time.time() - g.start_time
-            response.headers['X-Request-Time'] = f'{elapsed:.4f}s'
-        
-        # Add security headers
+    def add_security_headers(response):
+        """Add security headers to response."""
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['X-Frame-Options'] = 'SAMEORIGIN'
         response.headers['X-XSS-Protection'] = '1; mode=block'
-        
+        # HSTS (Strict-Transport-Security) only if HTTPS
+        # response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
         return response
 
-    @app.teardown_request
-    def teardown_request(exception=None):
-        """Execute at the end of each request."""
-        pass
+    @app.route('/api/ping')
+    def health_check():
+        """Health check endpoint."""
+        return {'status': 'ok'}, 200

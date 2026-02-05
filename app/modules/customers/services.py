@@ -1,9 +1,10 @@
-# Customer services
+# Customer services (Async)
 
 from typing import Optional, List
-from app.extensions import db, cache
+from sqlalchemy import select
+from app.extensions import db
 from app.modules.customers.models import Customer
-from app.core.cache import CacheKeyPrefixes
+from app.core.cache import CacheKeyPrefixes, invalidate_cache, cached_list, cached_item
 
 CACHE_PREFIX = CacheKeyPrefixes.CUSTOMERS
 CACHE_TIMEOUT = 300  # 5 minutes
@@ -13,58 +14,58 @@ class CustomerService:
     """Customer management service."""
 
     @staticmethod
-    @cache.memoize(timeout=CACHE_TIMEOUT)
-    def get_all(include_inactive: bool = False) -> List[Customer]:
+    @cached_list(CACHE_PREFIX, timeout=CACHE_TIMEOUT)
+    async def get_all(include_inactive: bool = False) -> List[Customer]:
         """Get all customers."""
-        query = Customer.query
+        stmt = select(Customer).order_by(Customer.customer_name)
         if not include_inactive:
-            query = query.filter_by(is_active=True)
-        return query.order_by(Customer.customer_name).all()
+            stmt = stmt.filter_by(is_active=True)
+        result = await db.session.execute(stmt)
+        return result.scalars().all()
 
     @staticmethod
-    @cache.memoize(timeout=CACHE_TIMEOUT)
-    def get_by_id(customer_id: int) -> Optional[Customer]:
+    @cached_item(CACHE_PREFIX, timeout=CACHE_TIMEOUT)
+    async def get_by_id(customer_id: int) -> Optional[Customer]:
         """Get customer by ID."""
-        return Customer.query.get(customer_id)
+        return await db.session.get(Customer, customer_id)
 
     @staticmethod
-    def search(query: str) -> List[Customer]:
-        """Search customers by name or email (not cached due to dynamic query)."""
-        return Customer.query.filter(
-            db.or_(
-                Customer.customer_name.ilike(f'%{query}%'),
-                Customer.email.ilike(f'%{query}%')
-            ),
+    async def search(query: str) -> List[Customer]:
+        """Search customers by name."""
+        stmt = select(Customer).filter(
+            Customer.customer_name.ilike(f'%{query}%'),
             Customer.is_active == True
-        ).all()
+        )
+        result = await db.session.execute(stmt)
+        return result.scalars().all()
 
     @staticmethod
-    def create(**kwargs) -> Customer:
+    async def create(**kwargs) -> Customer:
         """Create a new customer."""
         customer = Customer(**kwargs)
         db.session.add(customer)
-        db.session.commit()
+        await db.session.commit()
         # Invalidate cache
-        cache.delete_memoized(CustomerService.get_all)
+        await invalidate_cache(CACHE_PREFIX)
         return customer
 
     @staticmethod
-    def update(customer: Customer, **kwargs) -> Customer:
+    async def update(customer: Customer, **kwargs) -> Customer:
         """Update customer."""
         for key, value in kwargs.items():
             if hasattr(customer, key) and key != 'customer_id':
                 setattr(customer, key, value)
-        db.session.commit()
+        await db.session.commit()
         # Invalidate cache
-        cache.delete_memoized(CustomerService.get_all)
-        cache.delete_memoized(CustomerService.get_by_id, customer.customer_id)
+        await invalidate_cache(CACHE_PREFIX, customer.customer_id)
+        await invalidate_cache(CACHE_PREFIX)
         return customer
 
     @staticmethod
-    def delete(customer: Customer) -> None:
+    async def delete(customer: Customer) -> None:
         """Soft delete customer."""
         customer.is_active = False
-        db.session.commit()
+        await db.session.commit()
         # Invalidate cache
-        cache.delete_memoized(CustomerService.get_all)
-        cache.delete_memoized(CustomerService.get_by_id, customer.customer_id)
+        await invalidate_cache(CACHE_PREFIX, customer.customer_id)
+        await invalidate_cache(CACHE_PREFIX)

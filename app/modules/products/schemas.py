@@ -1,51 +1,38 @@
-# Product schemas
+# Product schemas (Pydantic)
 
-from marshmallow import Schema, fields, validate
+from datetime import datetime
+from decimal import Decimal
+from typing import Optional
+from pydantic import BaseModel, Field, ConfigDict
 
+class ProductBase(BaseModel):
+    """Base product schema."""
+    product_code: str = Field(..., max_length=50)
+    product_name: str = Field(..., max_length=200)
+    description: Optional[str] = None
+    category_id: Optional[int] = None
+    brand_id: Optional[int] = None
+    unit_price: Decimal = Field(..., ge=0)
+    cost_price: Optional[Decimal] = Field(None, ge=0)
+    reorder_level: int = Field(10, ge=0)
+    min_stock_level: int = Field(5, ge=0)
+    max_stock_level: Optional[int] = Field(None, ge=0)
+    unit_of_measure: str = Field('pcs', max_length=20)
+    barcode: Optional[str] = Field(None, max_length=100)
+    sku: Optional[str] = Field(None, max_length=100)
+    weight: Optional[Decimal] = Field(None, ge=0)
+    dimensions: Optional[str] = Field(None, max_length=50)
+    is_active: bool = True
 
-class ProductSchema(Schema):
-    """Product serialization schema."""
-    product_id = fields.Int(dump_only=True)
-    product_code = fields.Str(required=True, validate=validate.Length(max=50))
-    product_name = fields.Str(required=True, validate=validate.Length(max=200))
-    description = fields.Str()
-    category_id = fields.Int(allow_none=True)
-    brand_id = fields.Int(allow_none=True)
-    unit_price = fields.Decimal(required=True, places=2, validate=validate.Range(min=0))
-    cost_price = fields.Decimal(places=2, allow_none=True, validate=validate.Range(min=0))
-    reorder_level = fields.Int(load_default=10, validate=validate.Range(min=0))
-    min_stock_level = fields.Int(load_default=5, validate=validate.Range(min=0))
-    max_stock_level = fields.Int(allow_none=True, validate=validate.Range(min=0))
-    unit_of_measure = fields.Str(load_default='pcs', validate=validate.Length(max=20))
-    barcode = fields.Str(validate=validate.Length(max=100), allow_none=True)
-    sku = fields.Str(validate=validate.Length(max=100), allow_none=True)
-    weight = fields.Decimal(places=3, allow_none=True, validate=validate.Range(min=0))
-    dimensions = fields.Str(validate=validate.Length(max=50), allow_none=True)
-    is_active = fields.Bool()
-    total_stock = fields.Int(dump_only=True)
-    created_at = fields.DateTime(dump_only=True)
-    updated_at = fields.DateTime(dump_only=True)
+    model_config = ConfigDict(from_attributes=True)
 
-
-class ProductCreateSchema(Schema):
+class ProductCreate(ProductBase):
     """Product creation schema."""
-    product_code = fields.Str(required=True, validate=validate.Length(max=50))
-    product_name = fields.Str(required=True, validate=validate.Length(max=200))
-    description = fields.Str()
-    category_id = fields.Int(allow_none=True)
-    brand_id = fields.Int(allow_none=True)
-    unit_price = fields.Decimal(required=True, places=2, validate=validate.Range(min=0))
-    cost_price = fields.Decimal(places=2, allow_none=True, validate=validate.Range(min=0))
-    reorder_level = fields.Int(load_default=10, validate=validate.Range(min=0))
-    min_stock_level = fields.Int(load_default=5, validate=validate.Range(min=0))
-    max_stock_level = fields.Int(allow_none=True, validate=validate.Range(min=0))
-    unit_of_measure = fields.Str(load_default='pcs')
-    barcode = fields.Str(validate=validate.Length(max=100), allow_none=True)
-    sku = fields.Str(validate=validate.Length(max=100), allow_none=True)
-    weight = fields.Decimal(places=3, allow_none=True, validate=validate.Range(min=0))
-    dimensions = fields.Str(validate=validate.Length(max=50), allow_none=True)
+    pass
 
-
-product_schema = ProductSchema()
-products_schema = ProductSchema(many=True)
-product_create_schema = ProductCreateSchema()
+class ProductResponse(ProductBase):
+    """Product response schema."""
+    product_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    total_stock: Optional[int] = 0
